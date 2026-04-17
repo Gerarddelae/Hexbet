@@ -1,0 +1,4 @@
+# Archivo de ejemplo para .npmrc
+# Copia este archivo a .npmrc y personaliza según sea necesario.
+
+strict-peer-dependencies=false

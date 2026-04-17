@@ -1,0 +1,25 @@
+{
+  "name": "bet_engine",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "turbo run test",
+    "build": "turbo run build",
+    "typecheck": "turbo run typecheck",
+    "lint": "turbo run lint",
+    "dev": "turbo run dev --parallel",
+    "format": "turbo run format"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "private": true,
+  "packageManager": "pnpm@10.8.1",
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "turbo": "^2.9.6",
+    "typescript": "^6.0.3"
+  }
+}
