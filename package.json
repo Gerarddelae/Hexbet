@@ -9,7 +9,17 @@
     "typecheck": "turbo run typecheck",
     "lint": "turbo run lint",
     "dev": "turbo run dev --parallel",
-    "format": "turbo run format"
+    "format": "turbo run format",
+    "docker:up": "docker compose up -d --wait",
+    "docker:down": "docker compose down --remove-orphans",
+    "docker:reset": "docker compose down -v --remove-orphans",
+    "docker:cleanup:legacy": "node -e \"require('child_process').spawnSync('docker',['rm','-f','betengine-postgres','betengine-redis','betengine-zookeeper','betengine-kafka','betengine-kafka-setup'],{stdio:'inherit'});\"",
+    "docker:logs": "docker compose logs -f --tail=200",
+    "docker:ps": "docker compose ps",
+    "docker:topics": "docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list",
+    "docker:test:up": "docker compose -f docker-compose.test.yml up -d",
+    "docker:test:down": "docker compose -f docker-compose.test.yml down -v --remove-orphans",
+    "ci:check": "pnpm lint && pnpm typecheck && pnpm build && pnpm test"
   },
   "keywords": [],
   "author": "",
