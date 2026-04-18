@@ -4,6 +4,8 @@ Repositorio que implementa HexBet, un motor de apuestas modular. Proporciona una
 
 Estado: Phase 0 — bootstrap con `pnpm` workspaces y Turborepo.
 
+Estado actual: inicio de Phase 1 con infraestructura local (Docker Compose), scaffolds NestJS y CI base.
+
 Resumen
 - Propósito: implementación y demostración técnica de un motor de apuestas modular.
 - Alcance: prototipo técnico; no está preparado para despliegue en producción.
@@ -47,6 +49,24 @@ Comandos útiles
 ```bash
 pnpm --filter ./apps/* dev
 ```
+
+- Levantar infraestructura local: `pnpm docker:up`
+- Ver estado de contenedores: `pnpm docker:ps`
+- Ver topics de Kafka: `pnpm docker:topics`
+- Apagar infraestructura: `pnpm docker:down`
+- Limpiar contenedores legacy: `pnpm docker:cleanup:legacy`
+
+Infraestructura incluida en Phase 1
+- Zookeeper
+- Kafka (single-broker) + inicialización automática de topics
+- PostgreSQL + schemas base (`odds_engine`, `bet_service`, `settlement`)
+- Redis
+
+Para usar valores personalizados, copia `.env.example` a `.env` y ajusta puertos/credenciales locales.
+
+Documentacion adicional:
+- `docs/PHASE1_SUMMARY.md`
+- `docs/DEVELOPMENT.md`
 
 Estructura resumida
 - `apps/api-gateway` — Orquestación y enrutado de peticiones.
