@@ -158,7 +158,7 @@ export interface MatchRepositoryPort {
 // ═══════════════════════════════════════════════════════════════
 // CAPA DE INFRAESTRUCTURA - Adaptador (Implementación concreta)
 // ═══════════════════════════════════════════════════════════════
-// apps/odds-engine/src/infrastructure/adapters/postgres-match.repository.ts
+// apps/odds-engine/src/infrastructure/adapters/outbound/postgres/postgres-match.repository.ts
 @Injectable()
 export class PostgresMatchRepository implements MatchRepositoryPort {
   constructor(
@@ -232,7 +232,7 @@ bootstrap();
 #### Consumer de Eventos Kafka
 
 ```typescript
-// apps/odds-engine/src/interface/kafka/match-events.consumer.ts
+// apps/odds-engine/src/infrastructure/adapters/inbound/kafka/match-events.consumer.ts
 import { Controller } from '@nestjs/common';
 import { EventPattern, Payload, Ctx, KafkaContext } from '@nestjs/microservices';
 import { ProcessMatchEventUseCase } from '../../application/use-cases/process-match-event.use-case';
@@ -854,7 +854,7 @@ export interface OddsPublisherPort {
 ### 5.4 Consumer de Kafka en NestJS
 
 ```typescript
-// apps/odds-engine/src/interface/kafka/match-events.consumer.ts
+// apps/odds-engine/src/infrastructure/adapters/inbound/kafka/match-events.consumer.ts
 import { Controller, Logger } from '@nestjs/common';
 import { 
   EventPattern, 
@@ -1872,7 +1872,7 @@ Los adaptadores van en `infrastructure/adapters/`. El nombre combina el nombre d
 
 ### 12.6 Archivos de Controlador
 
-Los controladores HTTP van en `interface/http/`. Los consumers de Kafka van en `interface/kafka/`. El nombre describe el recurso que manejan: `BetController`, `MatchEventsConsumer`.
+Los controladores HTTP van en `interface/http/`. Los consumers de Kafka, al ser adaptadores de entrada, se colocan en `infrastructure/adapters/inbound/kafka/`. El nombre describe el recurso que manejan: `BetController`, `MatchEventsConsumer`.
 
 ---
 
@@ -1943,7 +1943,7 @@ curl http://localhost:3000/bets                  # Gateway → Bet Service
 | Adaptador Kafka | `src/infrastructure/adapters/` | `kafka-odds.publisher.ts` |
 | Controlador HTTP público | `src/interface/http/public/` | `bet.controller.ts` |
 | Controlador HTTP interno | `src/interface/http/internal/` | `bets.controller.ts` |
-| Consumer Kafka | `src/interface/kafka/` | `match-events.consumer.ts` |
+| Consumer Kafka | `src/infrastructure/adapters/inbound/kafka/` | `match-events.consumer.ts` |
 | Configuración | `src/infrastructure/config/` | `kafka.config.ts` |
 | Test unitario | `test/unit/` | `odds-calculator.spec.ts` |
 | Test de integración | `test/integration/` | `process-match-event.spec.ts` |

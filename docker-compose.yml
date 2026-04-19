@@ -46,7 +46,12 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:29092
     volumes:
       - ./infra/kafka/create-topics.sh:/scripts/create-topics.sh:ro
-    command: ["/bin/bash", "/scripts/create-topics.sh"]
+    command:
+      [
+        "/bin/bash",
+        "-lc",
+        "tr -d '\\r' < /scripts/create-topics.sh > /tmp/create-topics.sh && chmod +x /tmp/create-topics.sh && /bin/bash /tmp/create-topics.sh",
+      ]
     restart: "no"
 
   postgres:

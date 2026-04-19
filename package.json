@@ -16,7 +16,9 @@
     "docker:cleanup:legacy": "node -e \"require('child_process').spawnSync('docker',['rm','-f','betengine-postgres','betengine-redis','betengine-zookeeper','betengine-kafka','betengine-kafka-setup'],{stdio:'inherit'});\"",
     "docker:logs": "docker compose logs -f --tail=200",
     "docker:ps": "docker compose ps",
-    "docker:topics": "docker compose exec kafka kafka-topics --bootstrap-server localhost:9092 --list",
+    "docker:topics": "docker compose exec kafka kafka-topics --bootstrap-server kafka:29092 --list",
+    "docker:topics:create": "docker compose run --rm kafka-setup",
+    "docker:up:with-topics": "docker compose up -d --wait && docker compose run --rm kafka-setup",
     "docker:test:up": "docker compose -f docker-compose.test.yml up -d",
     "docker:test:down": "docker compose -f docker-compose.test.yml down -v --remove-orphans",
     "ci:check": "pnpm lint && pnpm typecheck && pnpm build && pnpm test"

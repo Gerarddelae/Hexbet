@@ -2,7 +2,7 @@ import { DataSource } from 'typeorm';
 
 const postgresPort = Number(process.env.POSTGRES_PORT ?? 5432);
 
-export const appDataSource = new DataSource({
+const appDataSource = new DataSource({
   type: 'postgres',
   host: process.env.POSTGRES_HOST ?? 'localhost',
   port: Number.isFinite(postgresPort) ? postgresPort : 5432,
