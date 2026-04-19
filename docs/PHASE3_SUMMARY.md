@@ -81,3 +81,8 @@ Implementar HU-003 en odds-engine: recalcular cuotas en tiempo real a partir de 
 2. Documentar y automatizar escenario de fallo parcial (Redis o Kafka no disponibles).
 3. Exponer configuracion de reintentos/backoff por variables de entorno.
 4. Preparar contrato operativo para consumo de `odds.updated` desde bet-service.
+5. Implementar fase de ingesta de proveedor real:
+  - webhook (API Gateway o servicio de ingesta dedicado)
+  - validacion de autenticidad del proveedor
+  - mapping al contrato `MatchEvent`
+  - publicacion a `match.events` para reutilizar el pipeline actual.

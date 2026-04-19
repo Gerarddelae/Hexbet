@@ -655,6 +655,24 @@ Esta independencia es intencional y refleja el patrón de arquitectura hexagonal
 
 La verificación de esta fase consiste en ejecutar `npm run simulate -- --scenario=high-volatility --speed=60x` y observar que los eventos aparecen en los logs del odds-engine y que las cuotas en Redis se actualizan correspondientemente.
 
+### Extension Recomendada (Portfolio): Ingesta de Proveedor Real
+
+Como evolucion natural del simulador, se recomienda una fase adicional de ingesta
+de proveedor real manteniendo el contrato interno por Kafka:
+
+```
+Proveedor externo -> Webhook/API Gateway -> match.events -> odds-engine + settlement
+```
+
+El objetivo de esta extension no es cambiar la logica de negocio de consumidores,
+sino agregar una capa de entrada segura y estandarizada que:
+- valide autenticidad del proveedor (API key o firma HMAC),
+- transforme payload externo a `MatchEvent` del `shared-kernel`,
+- publique en `match.events` y responda `202 Accepted`.
+
+Con este enfoque, `odds-engine` y `settlement` permanecen desacoplados del origen
+de datos y reutilizan exactamente el mismo flujo ya implementado.
+
 ---
 
 ## Fase 5: API Gateway — Punto Único de Entrada

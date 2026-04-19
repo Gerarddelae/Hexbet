@@ -105,14 +105,34 @@ Componentes implementados:
    - Evento duplicado: no recalcula ni publica cuotas.
    - Evento nuevo: log incluye estado de recalculo y estado de publicacion (`redis`, `kafka`).
 
-Automatizacion E2E HU-003 (un comando):
-- `pnpm e2e:hu003`
+Automatizacion E2E HU-003 (flujo actual):
+- Terminal A (consumer activo): `pnpm --filter @betting-engine/odds-engine dev`
+- Terminal B (publish + verificacion): `pnpm e2e:consumer`
 
-Opciones del script (`scripts/e2e-hu003.ps1`):
-- `-SkipSetup` omite `docker:up` y migraciones.
-- `-SkipServiceStart` asume odds-engine ya levantado.
-- `-SkipResilience` ejecuta solo happy path + idempotencia.
-- `-KeepServiceRunning` no detiene odds-engine al finalizar.
+El script `scripts/e2e-publish-verify.js` publica un evento valido en `match.events`
+y verifica persistencia en PostgreSQL + Redis para confirmar el flujo por
+`MatchEventsConsumer`.
+
+## Fase Futura Recomendada (Portfolio): Ingesta de Proveedor Real
+
+Objetivo: recibir eventos de un proveedor externo (webhook) y mantener el mismo
+pipeline interno basado en Kafka.
+
+Flujo propuesto:
+- Provider externo -> API Gateway (endpoint de ingesta privado)
+- Validacion de autenticidad (API key o firma HMAC)
+- Normalizacion al contrato `MatchEvent` de `shared-kernel`
+- Publicacion a `match.events`
+- Consumo existente en `odds-engine` y `settlement`
+
+Alcance MVP sugerido para portfolio:
+- Endpoint `POST /ingest/providers/:provider/match-events`
+- Validacion de payload y mapping a `MatchEvent`
+- Respuesta `202 Accepted` cuando el evento se publica a Kafka
+- Manejo basico de errores (`400`, `401/403`, `500`)
+
+Nota: hasta implementar esta fase, para pruebas se mantiene la publicacion directa
+en Kafka via simulador o scripts de E2E.
 
 ## Variables de Entorno
 
