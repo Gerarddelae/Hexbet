@@ -1,10 +1,14 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProcessMatchEventUseCase } from './application/use-cases/process-match-event.use-case';
+import { RecalculateOddsUseCase } from './application/use-cases/recalculate-odds.use-case';
 import {
   MATCH_REPOSITORY_PORT,
 } from './domain/ports/match-repository.port';
+import { ODDS_PUBLISHER_PORT } from './domain/ports/odds-publisher.port';
+import { OddsCalculatorService } from './domain/services/odds-calculator.service';
 import { PostgresMatchRepository } from './infrastructure/adapters/outbound/postgres/postgres-match.repository';
+import { RedisKafkaOddsPublisher } from './infrastructure/adapters/outbound/messaging/redis-kafka-odds.publisher';
 import { MatchEventsConsumer } from './infrastructure/adapters/inbound/kafka/match-events.consumer';
 import { HealthController } from './health.controller';
 
@@ -30,9 +34,15 @@ function parsePort(value: string | undefined, fallback: number): number {
   controllers: [HealthController, MatchEventsConsumer],
   providers: [
     ProcessMatchEventUseCase,
+    RecalculateOddsUseCase,
+    OddsCalculatorService,
     {
       provide: MATCH_REPOSITORY_PORT,
       useClass: PostgresMatchRepository,
+    },
+    {
+      provide: ODDS_PUBLISHER_PORT,
+      useClass: RedisKafkaOddsPublisher,
     },
   ],
 })

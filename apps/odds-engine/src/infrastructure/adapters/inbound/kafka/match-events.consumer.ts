@@ -1,13 +1,19 @@
-import { Controller, Logger } from '@nestjs/common';
+import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
 import { MatchEvent } from '@betting-engine/shared-kernel';
 import { ProcessMatchEventUseCase } from '../../../../application/use-cases/process-match-event.use-case';
+import { RecalculateOddsUseCase } from '../../../../application/use-cases/recalculate-odds.use-case';
 
 @Controller()
 export class MatchEventsConsumer {
   private readonly logger = new Logger(MatchEventsConsumer.name);
 
-  constructor(private readonly processMatchEventUseCase: ProcessMatchEventUseCase) {}
+  constructor(
+    @Inject(ProcessMatchEventUseCase)
+    private readonly processMatchEventUseCase: ProcessMatchEventUseCase,
+    @Inject(RecalculateOddsUseCase)
+    private readonly recalculateOddsUseCase: RecalculateOddsUseCase,
+  ) {}
 
   @EventPattern('match.events')
   async handleMatchEvent(
@@ -21,14 +27,41 @@ export class MatchEventsConsumer {
       return;
     }
 
-    const result = await this.processMatchEventUseCase.execute(event);
     const topic = context.getTopic();
     const partition = context.getPartition();
     const offset = context.getMessage().offset;
 
-    this.logger.log(
-      `${result.toUpperCase()} event ${event.type} for match ${event.matchId} from ${topic}[${partition}]@${offset}`,
-    );
+    if (!this.isUuid(event.matchId)) {
+      this.logger.warn(
+        `Skipping match event with invalid UUID matchId=${event.matchId} from ${topic}[${partition}]@${offset}`,
+      );
+      return;
+    }
+
+    try {
+      const result = await this.processMatchEventUseCase.execute(event);
+
+      if (result.status === 'processed' && result.matchState) {
+        const recalculation = await this.recalculateOddsUseCase.execute({
+          event,
+          matchState: result.matchState,
+        });
+
+        this.logger.log(
+          `PROCESSED ${event.type} for match ${event.matchId} from ${topic}[${partition}]@${offset} recalculation=${recalculation.status} redis=${recalculation.publication.redis} kafka=${recalculation.publication.kafka}`,
+        );
+        return;
+      }
+
+      this.logger.log(
+        `DUPLICATE event ${event.type} for match ${event.matchId} from ${topic}[${partition}]@${offset}`,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'unknown error';
+      this.logger.error(
+        `Failed processing event ${event.id} (${event.type}) for match ${event.matchId} from ${topic}[${partition}]@${offset}: ${message}`,
+      );
+    }
   }
 
   private extractEventPayload(payload: unknown): unknown {
@@ -65,5 +98,9 @@ export class MatchEventsConsumer {
       event.type === 'RED_CARD' ||
       event.type === 'MATCH_END'
     );
+  }
+
+  private isUuid(value: string): boolean {
+    return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
   }
 }

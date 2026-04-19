@@ -76,9 +76,53 @@ Notas:
 - El consumer Kafka usa por defecto el group id `odds-engine-consumer`.
 - Si no se define `KAFKA_BROKERS`, usa `localhost:9092`.
 
+## HU-003 (Odds Engine) - Calculo y Publicacion de Cuotas
+
+Esta fase extiende HU-002: cuando el evento de `match.events` se procesa como nuevo (`processed`),
+el servicio recalcula cuotas y las publica en Redis y Kafka.
+
+Componentes implementados:
+- `OddsCalculatorService` (modelo simplificado: base 45/25/30, ajuste por marcador/minuto, vig 5%).
+- `RecalculateOddsUseCase` (orquesta calculo + publicacion dual).
+- `RedisKafkaOddsPublisher` (Redis key `odds:{matchId}` + evento Kafka `odds.updated`).
+- Reintentos de publicacion por destino (3 intentos, backoff lineal).
+
+1. Validar calidad del servicio:
+   - pnpm --filter @betting-engine/odds-engine typecheck
+   - pnpm --filter @betting-engine/odds-engine test
+   - pnpm --filter @betting-engine/odds-engine build
+
+2. Levantar infraestructura y servicio:
+   - pnpm docker:up
+   - pnpm --filter @betting-engine/odds-engine migration:run
+   - pnpm --filter @betting-engine/odds-engine dev
+
+3. Publicar un evento en `match.events` (ejemplo manual) y verificar salida:
+   - Redis: `odds:{matchId}` debe existir con `home`, `draw`, `away`, `timestamp`.
+   - Kafka: debe emitirse un mensaje en `odds.updated` con `matchId`, `odds`, `triggeredByEventId`.
+
+4. Verificar logs operativos:
+   - Evento duplicado: no recalcula ni publica cuotas.
+   - Evento nuevo: log incluye estado de recalculo y estado de publicacion (`redis`, `kafka`).
+
+Automatizacion E2E HU-003 (un comando):
+- `pnpm e2e:hu003`
+
+Opciones del script (`scripts/e2e-hu003.ps1`):
+- `-SkipSetup` omite `docker:up` y migraciones.
+- `-SkipServiceStart` asume odds-engine ya levantado.
+- `-SkipResilience` ejecuta solo happy path + idempotencia.
+- `-KeepServiceRunning` no detiene odds-engine al finalizar.
+
 ## Variables de Entorno
 
 Usar .env.example como base y copiar a .env si necesitas personalizar puertos/credenciales.
+
+Variables usadas por HU-003 en odds-engine:
+- `KAFKA_ODDS_UPDATED_TOPIC` (default: `odds.updated`)
+- `REDIS_ODDS_TTL_SECONDS` (default: `300`)
+- `REDIS_HOST` (default: `localhost`)
+- `REDIS_PORT` (default: `6379`)
 
 ## Problemas Frecuentes
 

@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { InjectDataSource } from "@nestjs/typeorm";
 import { DataSource, QueryRunner } from "typeorm";
 import {
   MatchRepositoryPort,
@@ -11,7 +12,10 @@ import {
 
 @Injectable()
 export class PostgresMatchRepository implements MatchRepositoryPort {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource()
+    private readonly dataSource: DataSource,
+  ) {}
 
   async withTransaction<T>(
     work: (tx: MatchTransactionPort) => Promise<T>,

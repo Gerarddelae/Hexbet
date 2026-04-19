@@ -6,7 +6,15 @@ import {
 } from '../../domain/ports/match-repository.port';
 import { MatchState } from '../../domain/models/match-state.model';
 
-export type ProcessMatchEventResult = 'processed' | 'duplicate';
+export type ProcessMatchEventResult =
+  | {
+      status: 'processed';
+      matchState: MatchState;
+    }
+  | {
+      status: 'duplicate';
+      matchState: null;
+    };
 
 @Injectable()
 export class ProcessMatchEventUseCase {
@@ -24,14 +32,20 @@ export class ProcessMatchEventUseCase {
       });
 
       if (!isNewEvent) {
-        return 'duplicate';
+        return {
+          status: 'duplicate',
+          matchState: null,
+        };
       }
 
       const current = await tx.findMatchById(event.matchId);
       const next = this.applyEvent(current, event);
 
       await tx.saveMatch(next);
-      return 'processed';
+      return {
+        status: 'processed',
+        matchState: next,
+      };
     });
   }
 
