@@ -8,7 +8,7 @@
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "echo \"No lint configured yet for odds-engine\"",
-    "test": "tsx --test src/**/*.spec.ts",
+    "test": "tsx --test \"src/**/*.spec.ts\"",
     "dev": "tsx watch src/main.ts",
     "start": "node dist/apps/odds-engine/src/main.js",
     "migration:run": "pnpm build && pnpm exec typeorm migration:run -d dist/apps/odds-engine/src/database/data-source.js",
