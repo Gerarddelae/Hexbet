@@ -55,6 +55,27 @@ Todos exponen:
 
 - GET /health
 
+## HU-002 (Odds Engine) - Flujo de Validacion
+
+1. Ejecutar migraciones de odds-engine:
+   - pnpm --filter @betting-engine/odds-engine migration:run
+
+2. Levantar el servicio odds-engine:
+   - pnpm --filter @betting-engine/odds-engine dev
+
+3. Verificar quality checks del servicio:
+   - pnpm --filter @betting-engine/odds-engine typecheck
+   - pnpm --filter @betting-engine/odds-engine test
+   - pnpm --filter @betting-engine/odds-engine build
+
+4. Publicar eventos a `match.events` y revisar persistencia en PostgreSQL:
+   - evento nuevo: debe actualizar `odds_engine.matches`
+   - evento duplicado (mismo `provider` + `providerEventId`): debe ignorarse
+
+Notas:
+- El consumer Kafka usa por defecto el group id `odds-engine-consumer`.
+- Si no se define `KAFKA_BROKERS`, usa `localhost:9092`.
+
 ## Variables de Entorno
 
 Usar .env.example como base y copiar a .env si necesitas personalizar puertos/credenciales.

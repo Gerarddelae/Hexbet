@@ -354,7 +354,7 @@ bootstrap();
 ### Consumer de Kafka en NestJS
 
 ```typescript
-// apps/odds-engine/src/interface/kafka/match-events.consumer.ts
+// apps/odds-engine/src/infrastructure/adapters/inbound/kafka/match-events.consumer.ts
 import { Controller, Logger } from '@nestjs/common';
 import { 
   EventPattern, 
