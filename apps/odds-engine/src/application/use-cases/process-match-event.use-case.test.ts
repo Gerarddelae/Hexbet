@@ -62,7 +62,8 @@ test('processes MATCH_START and creates a live match', async () => {
 
   const saved = repository.matches.get('e5d4e815-9d2c-4f0c-9d09-daa4624bc001');
 
-  assert.equal(result, 'processed');
+  assert.equal(result.status, 'processed');
+  assert.ok(result.matchState);
   if (!saved) throw new Error('Expected match to be saved');
   assert.equal(saved.status, 'LIVE');
   assert.equal(saved.homeScore, 0);
@@ -92,7 +93,8 @@ test('processes GOAL and updates score and minute', async () => {
 
   const saved = repository.matches.get('e5d4e815-9d2c-4f0c-9d09-daa4624bc001');
 
-  assert.equal(result, 'processed');
+  assert.equal(result.status, 'processed');
+  assert.ok(result.matchState);
   if (!saved) throw new Error('Expected match to be saved');
   assert.equal(saved.status, 'LIVE');
   assert.equal(saved.homeScore, 1);
@@ -136,8 +138,9 @@ test('marks duplicated event as duplicate and does not change the match state', 
 
   const saved = repository.matches.get('e5d4e815-9d2c-4f0c-9d09-daa4624bc001');
 
-  assert.equal(firstResult, 'processed');
-  assert.equal(duplicateResult, 'duplicate');
+  assert.equal(firstResult.status, 'processed');
+  assert.equal(duplicateResult.status, 'duplicate');
+  assert.equal(duplicateResult.matchState, null);
   if (!saved) throw new Error('Expected match to be saved');
   assert.equal(saved.homeScore, 1);
   assert.equal(saved.awayScore, 0);
@@ -166,7 +169,8 @@ test('processes MATCH_END and updates final state', async () => {
 
   const saved = repository.matches.get('e5d4e815-9d2c-4f0c-9d09-daa4624bc001');
 
-  assert.equal(result, 'processed');
+  assert.equal(result.status, 'processed');
+  assert.ok(result.matchState);
   if (!saved) throw new Error('Expected match to be saved');
   assert.equal(saved.status, 'FINISHED');
   assert.equal(saved.homeScore, 2);

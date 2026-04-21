@@ -454,6 +454,29 @@ Los tests unitarios verifican el `ProcessMatchEventUseCase` con mocks del reposi
 
 ## Fase 3: Odds Engine — Cálculo y Publicación de Cuotas
 
+### Estado de Implementación (2026-04-19)
+
+HU-003 se encuentra implementada en `odds-engine` con una version operativa del flujo completo:
+
+- `ProcessMatchEventUseCase` retorna resultado estructurado (`processed` o `duplicate`) junto al estado del partido cuando aplica.
+- `MatchEventsConsumer` solo dispara recálculo/publicación cuando el evento fue `processed`.
+- `RecalculateOddsUseCase` calcula cuotas y publica en paralelo a Redis y Kafka.
+- `OddsCalculatorService` aplica modelo simplificado documentado (base + score/time factor + vig).
+- `RedisKafkaOddsPublisher` publica:
+  - Redis key `odds:{matchId}` con TTL configurable.
+  - Kafka topic `odds.updated` con `matchId` como key de particionamiento.
+- Resiliencia de publicación implementada con reintentos por destino y resultado agregado:
+  - `published`
+  - `partial_failure`
+  - `failed`
+
+Validación local ejecutada en esta implementación:
+- `pnpm --filter @betting-engine/odds-engine typecheck`: OK
+- `pnpm --filter @betting-engine/odds-engine test`: OK
+- `pnpm --filter @betting-engine/odds-engine build`: OK
+
+> Nota: este estado refleja la implementación real actual del repositorio. El resto de esta sección mantiene la descripción arquitectónica conceptual de la fase.
+
 ### Objetivo de Esta Fase
 
 Esta fase implementa la HU-003 y añade la lógica de negocio central del odds-engine. Ahora el servicio no solo persiste eventos, sino que calcula las cuotas resultantes y las publica para que estén disponibles para el bet-service.
@@ -631,6 +654,24 @@ El simulador es completamente independiente del resto de los servicios NestJS. N
 Esta independencia es intencional y refleja el patrón de arquitectura hexagonal. El odds-engine no sabe que los eventos provienen de un simulador; consume eventos de Kafka sin importar su origen. Un proveedor de datos real como SportRadar podría reemplazar el simulador cambiando solo la configuración de la variable de entorno `MATCH_DATA_PROVIDER`.
 
 La verificación de esta fase consiste en ejecutar `npm run simulate -- --scenario=high-volatility --speed=60x` y observar que los eventos aparecen en los logs del odds-engine y que las cuotas en Redis se actualizan correspondientemente.
+
+### Extension Recomendada (Portfolio): Ingesta de Proveedor Real
+
+Como evolucion natural del simulador, se recomienda una fase adicional de ingesta
+de proveedor real manteniendo el contrato interno por Kafka:
+
+```
+Proveedor externo -> Webhook/API Gateway -> match.events -> odds-engine + settlement
+```
+
+El objetivo de esta extension no es cambiar la logica de negocio de consumidores,
+sino agregar una capa de entrada segura y estandarizada que:
+- valide autenticidad del proveedor (API key o firma HMAC),
+- transforme payload externo a `MatchEvent` del `shared-kernel`,
+- publique en `match.events` y responda `202 Accepted`.
+
+Con este enfoque, `odds-engine` y `settlement` permanecen desacoplados del origen
+de datos y reutilizan exactamente el mismo flujo ya implementado.
 
 ---
 
