@@ -717,6 +717,24 @@ de datos y reutilizan exactamente el mismo flujo ya implementado.
 
 ## Fase 5: API Gateway — Punto Único de Entrada
 
+### Estado de Implementación (2026-04-22)
+
+HU-005 se encuentra implementada en `api-gateway` con una versión operativa del flujo completo:
+
+- `ProxyRequestUseCase` orquesta autenticación JWT, rate limiting y forward HTTP.
+- `JwtAuthAdapter` valida tokens JWT para usuarios.
+- `HttpServiceRouterAdapter` forward requests a servicios backend usando `@nestjs/axios`.
+- `RedisRateLimiterAdapter` implementa rate limiting con Redis.
+- `GatewayController` provee catch-all route para proxificar a servicios.
+- `OddsStreamGateway` provee WebSocket namespace `stream/odds`.
+- Configuración de rutas en `services.config.ts` con auth y rate limits por endpoint.
+
+Validación local ejecutada en esta implementación:
+- `pnpm --filter @betting-engine/api-gateway typecheck`: OK
+- `pnpm --filter @betting-engine/api-gateway build`: OK
+
+> Nota: este estado refleja la implementación real actual del repositorio. El resto de esta sección mantiene la descripción arquitectónica conceptual de la fase.
+
 ### Objetivo de Esta Fase
 
 Esta fase implementa la infraestructura de la API Gateway con NestJS, el componente crítico que evita la comunicación directa entre clientes y microservicios. La API Gateway actúa como fachada única, proporcionando autenticación, rate limiting, enrutamiento y agregación de respuestas.

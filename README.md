@@ -4,7 +4,7 @@ Repositorio que implementa HexBet, un motor de apuestas modular. Proporciona una
 
 Estado base: Phase 0/1 — bootstrap con `pnpm` workspaces + Turborepo e infraestructura local con Docker Compose.
 
-Estado actual: avance hasta Phase 4 con simulador CLI operativo para eventos de partido, flujo E2E contra `odds-engine`, y modo `--fresh-match-ids` para ejecutar corridas repetidas sin editar escenarios.
+Estado actual: avance hasta Phase 5 con API Gateway operativa (JWT, rate limiting, proxying HTTP, WebSocket streaming).
 
 Resumen
 - Propósito: implementación y demostración técnica de un motor de apuestas modular.
@@ -20,12 +20,17 @@ Características principales
 - Contratos y tipos centralizados en `packages/shared-kernel`.
 - Simulador para reproducir escenarios de partido y validar procesamiento de eventos en Kafka.
 - Soporte de ejecución repetida del simulador con `--fresh-match-ids`.
+- API Gateway con autenticación JWT, rate limiting y proxying HTTP.
+- WebSocket para streaming de cuotas en tiempo real.
 
 Tecnologías
 - Node.js 18+
 - pnpm (workspaces)
 - Turborepo (orquestación de builds)
 - TypeScript
+- Express + NestJS (API Gateway)
+- Socket.io (WebSocket)
+- Redis (rate limiting)
 
 Instalación y ejecución local
 Clonar el repositorio y entrar al directorio del proyecto:
@@ -59,6 +64,9 @@ pnpm --filter ./apps/* dev
 - Listar escenarios del simulador: `pnpm --filter @betting-engine/simulator list-scenarios`
 - Ejecutar simulador (modo normal): `pnpm --filter @betting-engine/simulator simulate -- --scenario normal-match --speed 60x`
 - Ejecutar simulador (modo fresh): `pnpm --filter @betting-engine/simulator simulate -- --scenario normal-match --speed 60x --fresh-match-ids`
+- Levantar API Gateway: `pnpm --filter @betting-engine/api-gateway dev`
+- Verificar health del Gateway: `curl http://localhost:3000/health`
+- Proxificar a bet-service: `curl http://localhost:3000/bet-service/matches/live`
 
 Uso rápido del simulador
 - Modo normal (por defecto): usa el `matchId` definido en el JSON del escenario.
@@ -73,10 +81,12 @@ Infraestructura incluida en Phase 1
 Para usar valores personalizados, copia `.env.example` a `.env` y ajusta puertos/credenciales locales.
 
 Documentacion adicional:
+- `docs/PHASE0_SUMMARY.md`
 - `docs/PHASE1_SUMMARY.md`
 - `docs/PHASE2_SUMMARY.md`
 - `docs/PHASE3_SUMMARY.md`
 - `docs/PHASE4_SUMMARY.md`
+- `docs/PHASE5_SUMMARY.md`
 - `docs/DEVELOPMENT.md`
 
 Estructura resumida
