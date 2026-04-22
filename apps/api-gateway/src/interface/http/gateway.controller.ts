@@ -1,4 +1,4 @@
-import { All, Req, Res, Param, Logger, Controller } from '@nestjs/common';
+import { All, Req, Res, Param, Logger, Controller, Inject } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ProxyRequestUseCase } from '../../application/use-cases/proxy-request.use-case';
 
@@ -7,7 +7,7 @@ export class GatewayController {
   private readonly logger = new Logger(GatewayController.name);
 
   constructor(
-    private readonly proxyRequestUseCase: ProxyRequestUseCase,
+    @Inject(ProxyRequestUseCase) private readonly proxyRequestUseCase: ProxyRequestUseCase,
   ) {}
 
   @All(':service/*')
@@ -31,11 +31,12 @@ export class GatewayController {
 
       res.status(response.statusCode).json(response.body);
     } catch (error: unknown) {
+      this.logger.error(`Proxy error: ${error}`);
       const err = error as { status?: number; message?: string };
       const statusCode = err.status ?? 500;
-      const message = err.message ?? 'Internal Server Error';
+      const message = err?.message ?? 'Internal Server Error';
 
-      this.logger.error(`Proxy error: ${message}`);
+      this.logger.error(`Proxy error caught: ${message}`);
       res.status(statusCode).json({ error: message });
     }
   }

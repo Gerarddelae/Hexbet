@@ -48,6 +48,12 @@ export class RedisKafkaOddsPublisher implements OddsPublisherPort, OnModuleDestr
     await this.redis.set(key, JSON.stringify(odds), 'EX', this.redisTtlSeconds);
   }
 
+  async deleteOdds(matchId: string): Promise<void> {
+    const key = `odds:${matchId}`;
+    await this.redis.del(key);
+    this.logger.log(`Deleted odds cache for match ${matchId}`);
+  }
+
   async publishToKafka(event: OddsUpdatedEvent): Promise<void> {
     await this.ensureProducerConnected();
     await this.kafkaProducer.send({

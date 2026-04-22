@@ -1230,6 +1230,17 @@ Para cada matchId activo, el use case consulta el puerto `OddsReaderPort` para o
 
 El use case formatea la respuesta incluyendo el identificador del partido, nombres de equipos, cuotas actuales y estado. El controlador retorna la respuesta con código HTTP doscientos y el array de partidos.
 
+### Nota de Implementación: Estado de Partido desde PostgreSQL
+
+La documentación conceptual menciona consultar al odds-engine por la lista de partidos activos. La implementación real tomó una decisión diferente por razones de desacoplamiento y simplicidad:
+
+En lugar de hacer una llamada HTTP síncrona al odds-engine, bet-service consulta directamente la tabla `odds_engine.matches` en PostgreSQL. Esta decisión:
+- Mantiene el desacoplamiento entre servicios (no hay dependencia de respuesta síncrona)
+- Usa datos que odds-engine ya persiste en PostgreSQL
+- Permite obtener el estado completo del partido (score, minuto) junto con las cuotas de Redis
+
+Esta aproximación es técnicamente equivalente en resultado, pero más robusta operacionalmente.
+
 ### Manejo de Cache Miss
 
 Un cache miss puede ocurrir por varias razones: el TTL de trescientos segundos expiró, el partido aún no ha publicado cuotas iniciales, o Redis tuvo un fallo temporal. En todos los casos, el comportamiento es el mismo: el partido no aparece en la lista de partidos en vivo.
