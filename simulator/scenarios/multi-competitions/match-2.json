@@ -1,0 +1,13 @@
+{
+  "name": "mc-match-2",
+  "description": "Match in Competition B (high volatility)",
+  "matchId": "33333333-3333-4333-8333-333333333333",
+  "provider": "simulator",
+  "events": [
+    { "type": "MATCH_START", "delayFromPreviousMs": 0, "payload": null },
+    { "type": "GOAL", "delayFromPreviousMs": 60000, "payload": { "minute": 1, "team": "AWAY", "homeScore": 0, "awayScore": 1 } },
+    { "type": "YELLOW_CARD", "delayFromPreviousMs": 45000, "payload": { "minute": 2, "team": "HOME" } },
+    { "type": "GOAL", "delayFromPreviousMs": 90000, "payload": { "minute": 4, "team": "HOME", "homeScore": 1, "awayScore": 1 } },
+    { "type": "MATCH_END", "delayFromPreviousMs": 5400000, "payload": { "minute": 90, "result": "HOME_WIN", "homeScore": 2, "awayScore": 1 } }
+  ]
+}

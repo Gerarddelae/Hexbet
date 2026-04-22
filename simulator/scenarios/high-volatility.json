@@ -1,0 +1,82 @@
+{
+  "name": "high-volatility",
+  "description": "Remontada local con tarjeta roja y cambios de marcador",
+  "matchId": "22222222-2222-4222-8222-222222222222",
+  "provider": "simulator",
+  "events": [
+    {
+      "type": "MATCH_START",
+      "delayFromPreviousMs": 0,
+      "payload": null
+    },
+    {
+      "type": "GOAL",
+      "delayFromPreviousMs": 900000,
+      "payload": {
+        "minute": 15,
+        "team": "AWAY",
+        "homeScore": 0,
+        "awayScore": 1
+      }
+    },
+    {
+      "type": "GOAL",
+      "delayFromPreviousMs": 600000,
+      "payload": {
+        "minute": 25,
+        "team": "AWAY",
+        "homeScore": 0,
+        "awayScore": 2
+      }
+    },
+    {
+      "type": "RED_CARD",
+      "delayFromPreviousMs": 300000,
+      "payload": {
+        "minute": 30,
+        "team": "HOME",
+        "playerId": "home-def-04"
+      }
+    },
+    {
+      "type": "GOAL",
+      "delayFromPreviousMs": 1200000,
+      "payload": {
+        "minute": 50,
+        "team": "HOME",
+        "homeScore": 1,
+        "awayScore": 2
+      }
+    },
+    {
+      "type": "GOAL",
+      "delayFromPreviousMs": 900000,
+      "payload": {
+        "minute": 65,
+        "team": "HOME",
+        "homeScore": 2,
+        "awayScore": 2
+      }
+    },
+    {
+      "type": "GOAL",
+      "delayFromPreviousMs": 900000,
+      "payload": {
+        "minute": 80,
+        "team": "HOME",
+        "homeScore": 3,
+        "awayScore": 2
+      }
+    },
+    {
+      "type": "MATCH_END",
+      "delayFromPreviousMs": 600000,
+      "payload": {
+        "minute": 90,
+        "result": "HOME_WIN",
+        "homeScore": 3,
+        "awayScore": 2
+      }
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+[
+  {
+    "name": "mc-match-1",
+    "description": "Match in Competition A (fast events)",
+    "matchId": "22222222-2222-4222-8222-222222222222",
+    "provider": "simulator",
+    "events": [
+      { "type": "MATCH_START", "delayFromPreviousMs": 0, "payload": null },
+      { "type": "GOAL", "delayFromPreviousMs": 300000, "payload": { "minute": 5, "team": "HOME", "homeScore": 1, "awayScore": 0 } },
+      { "type": "GOAL", "delayFromPreviousMs": 240000, "payload": { "minute": 9, "team": "AWAY", "homeScore": 1, "awayScore": 1 } },
+      { "type": "MATCH_END", "delayFromPreviousMs": 5100000, "payload": { "minute": 90, "result": "DRAW", "homeScore": 1, "awayScore": 1 } }
+    ]
+  },
+  {
+    "name": "mc-match-2",
+    "description": "Match in Competition B (high volatility)",
+    "matchId": "33333333-3333-4333-8333-333333333333",
+    "provider": "simulator",
+    "events": [
+      { "type": "MATCH_START", "delayFromPreviousMs": 0, "payload": null },
+      { "type": "GOAL", "delayFromPreviousMs": 60000, "payload": { "minute": 1, "team": "AWAY", "homeScore": 0, "awayScore": 1 } },
+      { "type": "YELLOW_CARD", "delayFromPreviousMs": 45000, "payload": { "minute": 2, "team": "HOME" } },
+      { "type": "GOAL", "delayFromPreviousMs": 90000, "payload": { "minute": 4, "team": "HOME", "homeScore": 1, "awayScore": 1 } },
+      { "type": "MATCH_END", "delayFromPreviousMs": 5400000, "payload": { "minute": 90, "result": "HOME_WIN", "homeScore": 2, "awayScore": 1 } }
+    ]
+  },
+  {
+    "name": "mc-match-3",
+    "description": "Match in Competition C (steady pace)",
+    "matchId": "44444444-4444-4444-8444-444444444444",
+    "provider": "simulator",
+    "events": [
+      { "type": "MATCH_START", "delayFromPreviousMs": 0, "payload": null },
+      { "type": "YELLOW_CARD", "delayFromPreviousMs": 180000, "payload": { "minute": 3, "team": "AWAY" } },
+      { "type": "GOAL", "delayFromPreviousMs": 600000, "payload": { "minute": 13, "team": "HOME", "homeScore": 1, "awayScore": 0 } },
+      { "type": "MATCH_END", "delayFromPreviousMs": 4800000, "payload": { "minute": 90, "result": "HOME_WIN", "homeScore": 1, "awayScore": 0 } }
+    ]
+  }
+]

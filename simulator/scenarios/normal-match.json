@@ -1,0 +1,33 @@
+{
+  "name": "normal-match",
+  "description": "Partido regular con victoria local 1-0",
+  "matchId": "11111111-1111-4111-8111-111111111111",
+  "provider": "simulator",
+  "events": [
+    {
+      "type": "MATCH_START",
+      "delayFromPreviousMs": 0,
+      "payload": null
+    },
+    {
+      "type": "GOAL",
+      "delayFromPreviousMs": 1380000,
+      "payload": {
+        "minute": 23,
+        "team": "HOME",
+        "homeScore": 1,
+        "awayScore": 0
+      }
+    },
+    {
+      "type": "MATCH_END",
+      "delayFromPreviousMs": 4020000,
+      "payload": {
+        "minute": 90,
+        "result": "HOME_WIN",
+        "homeScore": 1,
+        "awayScore": 0
+      }
+    }
+  ]
+}

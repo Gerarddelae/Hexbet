@@ -63,11 +63,6 @@ Todos exponen:
 2. Levantar el servicio odds-engine:
    - pnpm --filter @betting-engine/odds-engine dev
 
-3. Verificar quality checks del servicio:
-   - pnpm --filter @betting-engine/odds-engine typecheck
-   - pnpm --filter @betting-engine/odds-engine test
-   - pnpm --filter @betting-engine/odds-engine build
-
 4. Publicar eventos a `match.events` y revisar persistencia en PostgreSQL:
    - evento nuevo: debe actualizar `odds_engine.matches`
    - evento duplicado (mismo `provider` + `providerEventId`): debe ignorarse
@@ -75,6 +70,8 @@ Todos exponen:
 Notas:
 - El consumer Kafka usa por defecto el group id `odds-engine-consumer`.
 - Si no se define `KAFKA_BROKERS`, usa `localhost:9092`.
+- Si el partido ya esta `FINISHED`, nuevos eventos para ese `matchId` no se procesan en `odds-engine`.
+- `ProcessMatchEventUseCase` aplica actualizacion monotona (no regresiva): `currentMinute`, `homeScore` y `awayScore` no disminuyen ante reemision de eventos viejos.
 
 ## HU-003 (Odds Engine) - Calculo y Publicacion de Cuotas
 
@@ -85,8 +82,6 @@ Componentes implementados:
 - `OddsCalculatorService` (modelo simplificado: base 45/25/30, ajuste por marcador/minuto, vig 5%).
 - `RecalculateOddsUseCase` (orquesta calculo + publicacion dual).
 - `RedisKafkaOddsPublisher` (Redis key `odds:{matchId}` + evento Kafka `odds.updated`).
-- Reintentos de publicacion por destino (3 intentos, backoff lineal).
-
 1. Validar calidad del servicio:
    - pnpm --filter @betting-engine/odds-engine typecheck
    - pnpm --filter @betting-engine/odds-engine test
@@ -116,8 +111,6 @@ y verifica persistencia en PostgreSQL + Redis para confirmar el flujo por
 ## Fase Futura Recomendada (Portfolio): Ingesta de Proveedor Real
 
 Objetivo: recibir eventos de un proveedor externo (webhook) y mantener el mismo
-pipeline interno basado en Kafka.
-
 Flujo propuesto:
 - Provider externo -> API Gateway (endpoint de ingesta privado)
 - Validacion de autenticidad (API key o firma HMAC)
@@ -133,6 +126,24 @@ Alcance MVP sugerido para portfolio:
 
 Nota: hasta implementar esta fase, para pruebas se mantiene la publicacion directa
 en Kafka via simulador o scripts de E2E.
+
+## HU-008 (Simulador) - Modos de Ejecucion
+
+Comandos base:
+
+- Listar escenarios:
+   - `pnpm --filter @betting-engine/simulator list-scenarios`
+- Ejecutar en modo normal (usa `matchId` del JSON):
+   - `pnpm --filter @betting-engine/simulator simulate -- --scenario normal-match --speed 60x`
+- Ejecutar en modo fresh (genera `matchId` nuevo por corrida):
+   - `pnpm --filter @betting-engine/simulator simulate -- --scenario normal-match --speed 60x --fresh-match-ids`
+
+Notas operativas:
+
+- Modo normal: si el mismo `matchId` ya termino (`FINISHED`), nuevas corridas no agregan eventos persistidos para ese partido.
+- Modo fresh: cada corrida crea partidos nuevos sin editar el JSON del escenario.
+- El remapeo de `matchId` es solo en memoria; los archivos `scenarios/*.json` no se modifican.
+- En escenarios con `matchId` estatico, usar `--fresh-match-ids` evita mezclar corridas en el mismo partido logico.
 
 ## Variables de Entorno
 

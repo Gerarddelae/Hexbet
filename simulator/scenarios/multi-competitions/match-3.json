@@ -1,0 +1,12 @@
+{
+  "name": "mc-match-3",
+  "description": "Match in Competition C (steady pace)",
+  "matchId": "44444444-4444-4444-8444-444444444444",
+  "provider": "simulator",
+  "events": [
+    { "type": "MATCH_START", "delayFromPreviousMs": 0, "payload": null },
+    { "type": "YELLOW_CARD", "delayFromPreviousMs": 180000, "payload": { "minute": 3, "team": "AWAY" } },
+    { "type": "GOAL", "delayFromPreviousMs": 600000, "payload": { "minute": 13, "team": "HOME", "homeScore": 1, "awayScore": 0 } },
+    { "type": "MATCH_END", "delayFromPreviousMs": 4800000, "payload": { "minute": 90, "result": "HOME_WIN", "homeScore": 1, "awayScore": 0 } }
+  ]
+}

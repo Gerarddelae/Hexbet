@@ -53,12 +53,16 @@ export class PostgresMatchRepository implements MatchRepositoryPort {
   ): Promise<boolean> {
     const rows: Array<{ provider: string }> = await queryRunner.manager.query(
       `
+        WITH m AS (
+          SELECT status FROM odds_engine.matches WHERE id = $3 FOR UPDATE
+        )
         INSERT INTO odds_engine.match_event_log (
           provider,
           provider_event_id,
           match_id
         )
-        VALUES ($1, $2, $3)
+        SELECT $1, $2, $3
+        WHERE NOT EXISTS (SELECT 1 FROM m WHERE status = 'FINISHED')
         ON CONFLICT (provider, provider_event_id) DO NOTHING
         RETURNING provider
       `,
