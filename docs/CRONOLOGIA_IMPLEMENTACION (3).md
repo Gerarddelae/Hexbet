@@ -428,25 +428,27 @@ export class OddsEngineModule {}
 
 Cuando el simulador publica un evento al topic `match.events`, el flujo de procesamiento es el siguiente:
 
-El consumidor de Kafka (`MatchEventsConsumer`) recibe el mensaje y lo deserializa a un objeto `MatchEvent`. Extrae el `providerEventId` y consulta la base de datos para verificar si este evento ya fue procesado. Si el evento es duplicado, registra el estado `DUPLICATE` en el log y retorna sin procesar. Si es nuevo, el use case procesa el evento según su tipo.
+El consumidor de Kafka (`MatchEventsConsumer`) recibe el mensaje y lo deserializa a un objeto `MatchEvent`. El caso de uso intenta registrar el evento en `match_event_log` usando la clave `(provider, provider_event_id)` en una transacción. Si el registro no se inserta (por duplicado o por regla de partido finalizado), se considera `DUPLICATE` y no se procesa estado.
 
-Para `MATCH_START`, crea una nueva fila en la tabla `matches` con estado `LIVE` y marcador inicial cero a cero. Para `GOAL`, actualiza el marcador según el payload del evento y registra el minuto del gol. Para `RED_CARD`, actualiza el minuto actual y registra la tarjeta roja en el log de eventos. Para `MATCH_END`, cambia el estado a `FINISHED`.
+Para `MATCH_START`, crea/actualiza el partido a estado `LIVE` con marcador inicial. Para `GOAL` y eventos de tarjeta, actualiza minuto y marcador con semántica monotónica (no regresiva). Para `MATCH_END`, cambia estado a `FINISHED` y consolida resultado final también con semántica monotónica.
 
-Finalmente, el evento se registra en `match_event_log` con estado `PROCESSED`, garantizando que el mismo evento no se procesará dos veces aunque el mensaje sea entregado múltiples veces.
+Además, existe una guardia de consistencia en persistencia: si el partido ya está `FINISHED`, no se aceptan nuevos eventos para ese `matchId`.
 
 ### Mecanismo de Idempotencia
 
 La idempotencia es crítica en sistemas basados en eventos porque Kafka ofrece semantics de al menos una entrega. Un mensaje puede ser entregado más de una vez en situaciones de red inestable, reinicio de consumer, o rebalanceo del consumer group.
 
-El mecanismo de idempotencia del odds-engine utiliza una constraint de unicidad en la base de datos. La tabla `match_event_log` tiene un índice único en la combinación `(provider, provider_event_id)`. Cuando el odds-engine intenta insertar un evento duplicado, la base de datos rechaza la operación con un error de violación de unicidad.
+El mecanismo de idempotencia del odds-engine utiliza una constraint de unicidad en la base de datos. La tabla `match_event_log` tiene una PK en la combinación `(provider, provider_event_id)` y se usa `ON CONFLICT DO NOTHING` para tratar duplicados de forma segura.
 
-El código captura este error y lo maneja gracefully, registrando el evento como `DUPLICATE` en lugar de fallar. El partido no se actualiza dos veces, y el log refleja que el evento fue recibido pero ya había sido procesado.
+Como protección adicional, el insert de `match_event_log` es condicional al estado del partido: si ya está `FINISHED`, no inserta ni procesa el evento. Esto evita reprocesamiento tardío tras cierre de partido.
+
+Para eventos fuera de orden o reemitidos con payload antiguo, el estado del partido se protege con actualización monotónica (`Math.max` sobre `currentMinute`, `homeScore`, `awayScore`), evitando regresiones del marcador o minuto.
 
 ### Verificación de la Fase
 
 Para verificar que esta fase funciona correctamente, se publica manualmente un evento al topic `match.events` usando la herramienta `kafka-console-producer`. Tras la publicación, se verifica en PostgreSQL que la fila correspondiente existe en la tabla `odds_engine.matches` con los valores correctos.
 
-La verificación de idempotencia se realiza publicando el mismo evento una segunda vez. La segunda publicación debe resultar en una fila con `processing_status = 'DUPLICATE'` en `match_event_log`, sin cambios en el partido.
+La verificación de idempotencia se realiza publicando el mismo evento una segunda vez. La segunda publicación no debe aumentar filas en `match_event_log` para la misma clave `(provider, provider_event_id)`, y el estado del partido debe permanecer sin cambios.
 
 Los tests unitarios verifican el `ProcessMatchEventUseCase` con mocks del repositorio, confirmando que los tres tipos de evento actualizan el estado correctamente.
 
@@ -532,6 +534,31 @@ export class KafkaOddsPublisher implements OddsPublisherPort {
     // Implementado en RedisOddsPublisher...
   }
 }
+
+---
+
+## Fase 4: Simulador CLI — HU-008 (Estado)
+
+Se añadió un componente `simulator/` al monorepo como herramienta standalone para generar eventos de partido y publicarlos al topic `match.events`. El simulador es un CLI TypeScript que incorpora:
+
+- Comandos `list-scenarios` y `simulate`.
+- Modo `--fresh-match-ids` para regenerar `matchId` en memoria por corrida.
+- Validación de archivos de escenario en JSON.
+- Mapper a `MatchEvent` usando el contrato en `packages/shared-kernel`.
+- Publicador Kafka basado en `kafkajs`.
+- Scenarios estáticos iniciales: `normal-match`, `high-volatility`.
+
+Estado actual:
+
+- Implementación MVP completa en `simulator/` con tests unitarios y checks de compilación (`typecheck`, `build`, `test`) pasando.
+- Ejecución runtime de `simulate` requiere la infraestructura Kafka levantada; al ejecutar sin Docker Compose activo, falla con `ECONNREFUSED` hacia `localhost:9092`.
+- Con `--fresh-match-ids`, cada corrida crea partidos nuevos sin editar JSON y evita colisiones por `matchId` estático entre corridas.
+
+Recomendaciones:
+
+- Levantar infraestructura (`pnpm docker:up`) antes de ejecutar `simulate`.
+- En un futuro, integrar control de escenarios vía API Gateway y añadir autenticación HMAC para el endpoint de ingestión (no implementado en Fase 4).
+
 ```
 
 ### Actualización del Módulo
@@ -647,13 +674,26 @@ El factor de velocidad permite comprimir el tiempo del partido para demos rápid
 
 El factor de velocidad se aplica al campo `delayFromPreviousMs` de cada evento en el escenario. El delay efectivo es `delayFromPreviousMs / speedFactor`. Para pruebas de carga donde se necesita observar el comportamiento bajo alta frecuencia de eventos, el factor uno mantiene los delays originales.
 
+### Modos de Ejecución del Simulador
+
+El CLI soporta dos modos operativos:
+
+- Modo normal (default): usa el `matchId` definido en el escenario.
+- Modo fresh (`--fresh-match-ids`): regenera un UUID por escenario en memoria para cada corrida.
+
+Este segundo modo permite repetir un mismo escenario múltiples veces sin editar archivos `.json` y sin mezclar ejecuciones en el mismo partido lógico.
+
 ### Conexión con el Resto del Sistema
 
 El simulador es completamente independiente del resto de los servicios NestJS. No consume ningún topic, no accede a ninguna base de datos. Su única interacción es publicar al topic `match.events` de Kafka.
 
 Esta independencia es intencional y refleja el patrón de arquitectura hexagonal. El odds-engine no sabe que los eventos provienen de un simulador; consume eventos de Kafka sin importar su origen. Un proveedor de datos real como SportRadar podría reemplazar el simulador cambiando solo la configuración de la variable de entorno `MATCH_DATA_PROVIDER`.
 
-La verificación de esta fase consiste en ejecutar `npm run simulate -- --scenario=high-volatility --speed=60x` y observar que los eventos aparecen en los logs del odds-engine y que las cuotas en Redis se actualizan correspondientemente.
+La verificación de esta fase consiste en ejecutar `pnpm --filter @betting-engine/simulator simulate -- --scenario high-volatility --speed 60x` y observar que los eventos aparecen en los logs del odds-engine y que las cuotas en Redis se actualizan correspondientemente.
+
+Para corridas repetidas sobre el mismo escenario, se recomienda:
+
+`pnpm --filter @betting-engine/simulator simulate -- --scenario high-volatility --speed 60x --fresh-match-ids`
 
 ### Extension Recomendada (Portfolio): Ingesta de Proveedor Real
 
@@ -1797,7 +1837,7 @@ El proyecto se considera completo cuando todos estos checks pasan simultáneamen
 | # | Criterio | Fase | Comando de Verificación |
 |---|----------|------|------------------------|
 | 1 | Stack completo levanta | 1 | `docker-compose up -d` |
-| 2 | Simulador genera eventos | 4 | `npm run simulate -- --scenario=high-volatility` |
+| 2 | Simulador genera eventos | 4 | `pnpm --filter @betting-engine/simulator simulate -- --scenario high-volatility --speed 60x --fresh-match-ids` |
 | 3 | Cuotas se actualizan en Redis | 3 | `redis-cli get "odds:sim-demo-002"` |
 | 4 | **Endpoints internos NO accesibles directamente** | 5 | `curl http://localhost:3001/internal/matches` debe fallar |
 | 5 | **Endpoints públicos solo vía Gateway** | 5 | `curl http://localhost:3000/matches/live` |
@@ -1806,7 +1846,7 @@ El proyecto se considera completo cuando todos estos checks pasan simultáneamen
 | 8 | Apuesta con cuota stale retorna 409 | 7 | `curl -X POST` con odds desactualizados |
 | 9 | Apuestas se liquidan al terminar | 8 | `SELECT status FROM bet_service.bets` |
 | 10 | Settlement sobrevive a reinicio | 8 | `docker-compose restart settlement` |
-| 11 | Tests unitarios pasan | todas | `npm test` |
+| 11 | Tests unitarios pasan | todas | `pnpm test` |
 | 12 | Healthchecks responden | 9 | `curl http://localhost:3000/health` |
 
 Estos criterios garantizan que cada componente funciona correctamente y que la integración entre componentes está verificada. La ausencia de un solo criterio indica que hay una fase incompleta o una conexión rota entre fases.

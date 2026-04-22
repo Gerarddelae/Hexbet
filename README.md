@@ -2,9 +2,9 @@
 
 Repositorio que implementa HexBet, un motor de apuestas modular. Proporciona una arquitectura basada en microservicios, contratos compartidos y un simulador para probar flujos de apuestas.
 
-Estado: Phase 0 — bootstrap con `pnpm` workspaces y Turborepo.
+Estado base: Phase 0/1 — bootstrap con `pnpm` workspaces + Turborepo e infraestructura local con Docker Compose.
 
-Estado actual: inicio de Phase 1 con infraestructura local (Docker Compose), scaffolds NestJS y CI base.
+Estado actual: avance hasta Phase 4 con simulador CLI operativo para eventos de partido, flujo E2E contra `odds-engine`, y modo `--fresh-match-ids` para ejecutar corridas repetidas sin editar escenarios.
 
 Resumen
 - Propósito: implementación y demostración técnica de un motor de apuestas modular.
@@ -18,7 +18,8 @@ Contenido
 Características principales
 - Arquitectura modular basada en microservicios.
 - Contratos y tipos centralizados en `packages/shared-kernel`.
-- Simulador para reproducir escenarios (partidos, actualizaciones de cuotas, apuestas).
+- Simulador para reproducir escenarios de partido y validar procesamiento de eventos en Kafka.
+- Soporte de ejecución repetida del simulador con `--fresh-match-ids`.
 
 Tecnologías
 - Node.js 18+
@@ -55,6 +56,13 @@ pnpm --filter ./apps/* dev
 - Ver topics de Kafka: `pnpm docker:topics`
 - Apagar infraestructura: `pnpm docker:down`
 - Limpiar contenedores legacy: `pnpm docker:cleanup:legacy`
+- Listar escenarios del simulador: `pnpm --filter @betting-engine/simulator list-scenarios`
+- Ejecutar simulador (modo normal): `pnpm --filter @betting-engine/simulator simulate -- --scenario normal-match --speed 60x`
+- Ejecutar simulador (modo fresh): `pnpm --filter @betting-engine/simulator simulate -- --scenario normal-match --speed 60x --fresh-match-ids`
+
+Uso rápido del simulador
+- Modo normal (por defecto): usa el `matchId` definido en el JSON del escenario.
+- Modo fresh (`--fresh-match-ids`): regenera `matchId` en memoria por corrida para crear partidos nuevos sin modificar archivos `.json`.
 
 Infraestructura incluida en Phase 1
 - Zookeeper
@@ -66,6 +74,9 @@ Para usar valores personalizados, copia `.env.example` a `.env` y ajusta puertos
 
 Documentacion adicional:
 - `docs/PHASE1_SUMMARY.md`
+- `docs/PHASE2_SUMMARY.md`
+- `docs/PHASE3_SUMMARY.md`
+- `docs/PHASE4_SUMMARY.md`
 - `docs/DEVELOPMENT.md`
 
 Estructura resumida

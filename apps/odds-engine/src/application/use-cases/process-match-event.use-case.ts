@@ -51,7 +51,6 @@ export class ProcessMatchEventUseCase {
 
   private applyEvent(current: MatchState | null, event: MatchEvent): MatchState {
     const base = current ?? this.newMatch(event.matchId);
-
     switch (event.type) {
       case 'MATCH_START':
         return {
@@ -59,29 +58,45 @@ export class ProcessMatchEventUseCase {
           status: 'LIVE',
           currentMinute: 0,
         };
-      case 'GOAL':
+
+      case 'GOAL': {
+        const minute = this.normalizeNonNegativeNumber(event.payload.minute, base.currentMinute);
+        const homeScore = this.normalizeNonNegativeNumber(event.payload.homeScore, base.homeScore);
+        const awayScore = this.normalizeNonNegativeNumber(event.payload.awayScore, base.awayScore);
+
         return {
           ...base,
           status: this.normalizeLiveStatus(base.status),
-          homeScore: this.normalizeNonNegativeNumber(event.payload.homeScore, base.homeScore),
-          awayScore: this.normalizeNonNegativeNumber(event.payload.awayScore, base.awayScore),
-          currentMinute: this.normalizeNonNegativeNumber(event.payload.minute, base.currentMinute),
+          homeScore: Math.max(base.homeScore, homeScore),
+          awayScore: Math.max(base.awayScore, awayScore),
+          currentMinute: Math.max(base.currentMinute, minute),
         };
+      }
+
       case 'YELLOW_CARD':
-      case 'RED_CARD':
+      case 'RED_CARD': {
+        const minute = this.normalizeNonNegativeNumber(event.payload.minute, base.currentMinute);
+
         return {
           ...base,
           status: this.normalizeLiveStatus(base.status),
-          currentMinute: this.normalizeNonNegativeNumber(event.payload.minute, base.currentMinute),
+          currentMinute: Math.max(base.currentMinute, minute),
         };
-      case 'MATCH_END':
+      }
+
+      case 'MATCH_END': {
+        const minute = this.normalizeNonNegativeNumber(event.payload.minute, base.currentMinute);
+        const homeScore = this.normalizeNonNegativeNumber(event.payload.homeScore, base.homeScore);
+        const awayScore = this.normalizeNonNegativeNumber(event.payload.awayScore, base.awayScore);
+
         return {
           ...base,
           status: 'FINISHED',
-          homeScore: this.normalizeNonNegativeNumber(event.payload.homeScore, base.homeScore),
-          awayScore: this.normalizeNonNegativeNumber(event.payload.awayScore, base.awayScore),
-          currentMinute: this.normalizeNonNegativeNumber(event.payload.minute, base.currentMinute),
+          homeScore: Math.max(base.homeScore, homeScore),
+          awayScore: Math.max(base.awayScore, awayScore),
+          currentMinute: Math.max(base.currentMinute, minute),
         };
+      }
     }
   }
 

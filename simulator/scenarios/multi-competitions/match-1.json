@@ -1,0 +1,12 @@
+{
+  "name": "mc-match-1",
+  "description": "Match in Competition A (fast events)",
+  "matchId": "22222222-2222-4222-8222-222222222222",
+  "provider": "simulator",
+  "events": [
+    { "type": "MATCH_START", "delayFromPreviousMs": 0, "payload": null },
+    { "type": "GOAL", "delayFromPreviousMs": 300000, "payload": { "minute": 5, "team": "HOME", "homeScore": 1, "awayScore": 0 } },
+    { "type": "GOAL", "delayFromPreviousMs": 240000, "payload": { "minute": 9, "team": "AWAY", "homeScore": 1, "awayScore": 1 } },
+    { "type": "MATCH_END", "delayFromPreviousMs": 5100000, "payload": { "minute": 90, "result": "DRAW", "homeScore": 1, "awayScore": 1 } }
+  ]
+}

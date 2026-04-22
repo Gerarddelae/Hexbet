@@ -1,0 +1,25 @@
+{
+  "name": "@betting-engine/simulator",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/simulator/src/cli.js",
+  "types": "dist/simulator/src/cli.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "echo \"No lint configured yet for simulator\"",
+    "test": "tsx --test test/**/*.test.ts",
+    "dev": "tsx watch src/cli.ts",
+    "simulate": "tsx src/cli.ts run",
+    "list-scenarios": "tsx src/cli.ts list"
+  },
+  "dependencies": {
+    "@betting-engine/shared-kernel": "workspace:*",
+    "kafkajs": "^2.2.4"
+  },
+  "devDependencies": {
+    "@types/node": "^25.6.0",
+    "tsx": "^4.20.6",
+    "typescript": "^6.0.3"
+  }
+}
