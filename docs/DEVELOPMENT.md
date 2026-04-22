@@ -46,14 +46,15 @@
 
 ## Apps (Bootstrap)
 
-- api-gateway: puerto 3000
+- **api-gateway**: puerto 3000 (**punto único de entrada**)
 - odds-engine: puerto 3001
 - bet-service: puerto 3002
 - settlement: puerto 3003
 
 Todos exponen:
-
 - GET /health
+
+> Importante: Los clientes **NUNCA** se comunican directamente con los microservicios. Toda comunicación pasa por `api-gateway` (Fase 5 implementada).
 
 ## HU-002 (Odds Engine) - Flujo de Validacion
 
@@ -110,22 +111,29 @@ y verifica persistencia en PostgreSQL + Redis para confirmar el flujo por
 
 ## Fase Futura Recomendada (Portfolio): Ingesta de Proveedor Real
 
-Objetivo: recibir eventos de un proveedor externo (webhook) y mantener el mismo
+Objetivo: recibir eventos de un proveedor externo (webhook) y mantener el mismo flujo interno.
 Flujo propuesto:
 - Provider externo -> API Gateway (endpoint de ingesta privado)
-- Validacion de autenticidad (API key o firma HMAC)
-- Normalizacion al contrato `MatchEvent` de `shared-kernel`
-- Publicacion a `match.events`
+- Validación de autenticidad (API key o firma HMAC)
+- Normalización al contrato `MatchEvent` de `shared-kernel`
+- Publicación a `match.events`
 - Consumo existente en `odds-engine` y `settlement`
 
 Alcance MVP sugerido para portfolio:
 - Endpoint `POST /ingest/providers/:provider/match-events`
-- Validacion de payload y mapping a `MatchEvent`
+- Validación de payload y mapping a `MatchEvent`
 - Respuesta `202 Accepted` cuando el evento se publica a Kafka
-- Manejo basico de errores (`400`, `401/403`, `500`)
+- Manejo básico de errores (`400`, `401/403`, `500`)
 
-Nota: hasta implementar esta fase, para pruebas se mantiene la publicacion directa
-en Kafka via simulador o scripts de E2E.
+### Evaluación HMAC (2026-04-22)
+
+La recomendación de implementar HMAC para webhooks de Fase 4 fue evaluada:
+- **Pertinente**: Sí, para validar autenticidad de proveedores externos.
+- **Timing**: No debe confundirse con Fase 5 (JWT para usuarios).
+- **Scope separado**: HMAC es para ingestión de proveedores; JWT es para usuarios/clientes.
+- **Queda como**: Funcionalidad futura a implementar cuando se añada endpoint de ingestión.
+
+> Nota: hasta implementar esta fase, para pruebas se mantiene la publicación directa en Kafka via simulador o scripts de E2E.
 
 ## HU-008 (Simulador) - Modos de Ejecucion
 
@@ -144,6 +152,55 @@ Notas operativas:
 - Modo fresh: cada corrida crea partidos nuevos sin editar el JSON del escenario.
 - El remapeo de `matchId` es solo en memoria; los archivos `scenarios/*.json` no se modifican.
 - En escenarios con `matchId` estatico, usar `--fresh-match-ids` evita mezclar corridas en el mismo partido logico.
+
+## HU-005 (API Gateway) - Punto Único de Entrada
+
+### Estado (2026-04-22)
+
+Implementación completa en `apps/api-gateway/` con:
+
+- `ProxyRequestUseCase` - orquesta autenticación JWT, rate limiting y forward
+- `JwtAuthAdapter` - validación de tokens JWT
+- `HttpServiceRouterAdapter` - forward HTTP a servicios backend
+- `RedisRateLimiterAdapter` - rate limiting con Redis
+- `GatewayController` - catch-all route `/:service/*`
+- `OddsStreamGateway` - WebSocket namespace `stream/odds`
+
+### Validación
+
+1. Verificar calidad:
+   - `pnpm --filter @betting-engine/api-gateway typecheck`
+   - `pnpm --filter @betting-engine/api-gateway build`
+
+2. Levantar infraestructura:
+   - `pnpm docker:up`
+
+3. Levantar API Gateway:
+   - `pnpm --filter @betting-engine/api-gateway dev`
+
+4. Verificar health:
+   - `curl http://localhost:3000/health`
+
+### Rutas Configureadas
+
+| Path | Servicio | Auth | Rate Limit |
+|------|----------|------|------------|
+| `/matches/**` | bet-service | No | 100 req/min |
+| `/bets` | bet-service | JWT | 10 req/min |
+| `/user/**` | bet-service | JWT | 60 req/min |
+| `/health` | * | No | 60 req/min |
+
+### Limitaciones Actuales
+
+- El proxy a `bet-service` requiere que el servicio tenga endpoints HTTP implementados (Fase 6 pendiente).
+- WebSocket streaming no recibe eventos hasta que odds-engine esté publicando a Kafka y se implemente el consumer en gateway.
+- Rate limiting requiere Redis corriendo (`pnpm docker:up`).
+
+### Próximos Pasos
+
+1. Implementar Fase 6 (bet-service `GET /matches/live`, `POST /bets`)
+2. Conectar WebSocket con consumo de Kafka para broadcasting de cuotas
+3. Implementar endpoint de ingestión con HMAC para proveedores externos
 
 ## Variables de Entorno
 
