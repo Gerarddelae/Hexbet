@@ -1,5 +1,9 @@
 # HexBet — Motor de apuestas modular
 
+<img width="1536" height="1024" alt="ChatGPT Image 23 abr 2026, 12_29_07" src="https://github.com/user-attachments/assets/6e9cac3f-3716-4c33-acef-5d6cb2c7d1a6" />
+
+----
+
 Repositorio que implementa HexBet, un motor de apuestas modular. Proporciona una arquitectura basada en microservicios, contratos compartidos y un simulador para probar flujos de apuestas.
 
 Estado base: Phase 0/1 — bootstrap con `pnpm` workspaces + Turborepo e infraestructura local con Docker Compose.
