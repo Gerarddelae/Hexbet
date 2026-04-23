@@ -1,6 +1,7 @@
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
 import { MatchEndEvent, MatchEvent } from '@betting-engine/shared-kernel';
+import { kafkaMessagesProcessed } from '@betting-engine/observability';
 import { SettleMatchUseCase } from '../../../../application/use-cases/settle-match.use-case';
 import { PROCESSED_MATCH_REPOSITORY } from '../../../../domain/ports/processed-match-repository.port';
 
@@ -52,6 +53,7 @@ export class MatchEventsConsumer {
         this.logger.log(
           `SKIP: match ${event.matchId} already processed from ${topic}[${partition}]@${offset}`,
         );
+        kafkaMessagesProcessed.labels('match.events', 'MATCH_END', 'skipped').inc();
         return;
       }
 
@@ -69,12 +71,15 @@ export class MatchEventsConsumer {
         this.logger.log(
           `SETTLED match ${event.matchId} from ${topic}[${partition}]@${offset}: ${result.settled} bets settled`,
         );
+        kafkaMessagesProcessed.labels('match.events', 'MATCH_END', 'settled').inc();
       } else {
         this.logger.warn(
           `SETTLEMENT FAILED for match ${event.matchId} from ${topic}[${partition}]@${offset}: ${result.error}`,
         );
+        kafkaMessagesProcessed.labels('match.events', 'MATCH_END', 'failed').inc();
       }
     } catch (error) {
+      kafkaMessagesProcessed.labels('match.events', 'MATCH_END', 'error').inc();
       const message = error instanceof Error ? error.message : 'unknown error';
       this.logger.error(
         `Failed settlement for match ${event.matchId} from ${topic}[${partition}]@${offset}: ${message}`,

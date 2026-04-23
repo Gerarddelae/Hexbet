@@ -20,6 +20,9 @@ importers:
 
   apps/api-gateway:
     dependencies:
+      '@betting-engine/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       '@betting-engine/shared-kernel':
         specifier: workspace:*
         version: link:../../packages/shared-kernel
@@ -99,6 +102,9 @@ importers:
 
   apps/bet-service:
     dependencies:
+      '@betting-engine/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       '@betting-engine/shared-kernel':
         specifier: workspace:*
         version: link:../../packages/shared-kernel
@@ -123,6 +129,9 @@ importers:
       axios:
         specifier: ^1.7.9
         version: 1.15.2
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
       ioredis:
         specifier: ^5.10.1
         version: 5.10.1
@@ -145,6 +154,9 @@ importers:
         specifier: ^11.1.0
         version: 11.1.0
     devDependencies:
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -160,6 +172,12 @@ importers:
 
   apps/odds-engine:
     dependencies:
+      '@betting-engine/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
+      '@betting-engine/shared-kernel':
+        specifier: workspace:*
+        version: link:../../packages/shared-kernel
       '@nestjs/common':
         specifier: ^10.4.20
         version: 10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
@@ -175,6 +193,9 @@ importers:
       '@nestjs/typeorm':
         specifier: ^10.0.2
         version: 10.0.2(@nestjs/common@10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2))(@nestjs/core@10.4.22)(reflect-metadata@0.2.2)(rxjs@7.8.2)(typeorm@0.3.28(ioredis@5.10.1)(pg@8.20.0))
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
       ioredis:
         specifier: ^5.10.1
         version: 5.10.1
@@ -194,6 +215,9 @@ importers:
         specifier: ^0.3.27
         version: 0.3.28(ioredis@5.10.1)(pg@8.20.0)
     devDependencies:
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -209,6 +233,9 @@ importers:
 
   apps/settlement:
     dependencies:
+      '@betting-engine/observability':
+        specifier: workspace:*
+        version: link:../../packages/observability
       '@betting-engine/shared-kernel':
         specifier: workspace:*
         version: link:../../packages/shared-kernel
@@ -227,6 +254,9 @@ importers:
       axios:
         specifier: ^1.7.9
         version: 1.15.2
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
       kafkajs:
         specifier: ^2.2.4
         version: 2.2.4
@@ -243,6 +273,9 @@ importers:
         specifier: ^0.3.27
         version: 0.3.28(ioredis@5.10.1)(pg@8.20.0)
     devDependencies:
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
       '@types/node':
         specifier: ^25.6.0
         version: 25.6.0
@@ -255,6 +288,31 @@ importers:
       typeorm-ts-node-commonjs:
         specifier: ^0.3.20
         version: 0.3.20
+      typescript:
+        specifier: ^6.0.3
+        version: 6.0.3
+
+  packages/observability:
+    dependencies:
+      '@nestjs/common':
+        specifier: ^10.4.22
+        version: 10.4.22(class-transformer@0.5.1)(class-validator@0.14.4)(reflect-metadata@0.2.2)(rxjs@7.8.2)
+      express:
+        specifier: ^5.2.1
+        version: 5.2.1
+      prom-client:
+        specifier: ^15.1.3
+        version: 15.1.3
+      rxjs:
+        specifier: ^7.8.2
+        version: 7.8.2
+    devDependencies:
+      '@types/express':
+        specifier: ^5.0.6
+        version: 5.0.6
+      '@types/node':
+        specifier: ^25.6.0
+        version: 25.6.0
       typescript:
         specifier: ^6.0.3
         version: 6.0.3
@@ -623,6 +681,10 @@ packages:
     engines: {node: '>=8.0.0', npm: '>=5.0.0'}
     hasBin: true
 
+  '@opentelemetry/api@1.9.1':
+    resolution: {integrity: sha512-gLyJlPHPZYdAk1JENA9LeHejZe1Ti77/pTeFm/nMXmQH/HFZlcS/O2XJB+L8fkbrNSqhdtlvjBVjxwUYanNH5Q==}
+    engines: {node: '>=8.0.0'}
+
   '@pkgjs/parseargs@0.11.0':
     resolution: {integrity: sha512-+1VkjdD0QBLPodGrJUeqarH8VAIvQODIbwh9XpP5Syisf7YoQgsJKPNFoqqLQlu+VQ/tVSshMR6loPMn8U+dPg==}
     engines: {node: '>=14'}
@@ -790,6 +852,9 @@ packages:
   base64id@2.0.0:
     resolution: {integrity: sha512-lGe34o6EHj9y3Kts9R4ZYs/Gr+6N7MCaMlIFA3F1R2O5/m7K06AxfSeO5530PEERE6/WyEg3lsuyw4GHlPZHog==}
     engines: {node: ^4.5.0 || >= 5.9}
+
+  bintrees@1.0.2:
+    resolution: {integrity: sha512-VOMgTMwjAaUG580SXn3LacVgjurrbMme7ZZNYGSSV7mmtY6QQRh0Eg3pwIcntQ77DErK1L0NxkbetjcoXzVwKw==}
 
   body-parser@1.20.4:
     resolution: {integrity: sha512-ZTgYYLMOXY9qKU/57FAo8F+HA2dGX7bqGc71txDRC1rS4frdFI5R7NhluHxH6M0YItAP0sHB4uqAOcYKxO6uGA==}
@@ -1456,6 +1521,10 @@ packages:
     resolution: {integrity: sha512-9ZhXKM/rw350N1ovuWHbGxnGh/SNJ4cnxHiM0rxE4VN41wsg8P8zWn9hv/buK00RP4WvlOyr/RBDiptyxVbkZQ==}
     engines: {node: '>=0.10.0'}
 
+  prom-client@15.1.3:
+    resolution: {integrity: sha512-6ZiOBfCywsD4k1BN9IX0uZhF+tJkV8q8llP64G5Hajs4JOeVLPCwpPVcpXy3BwYiUGgyJzsJJQeOIv7+hDSq8g==}
+    engines: {node: ^16 || ^18 || >=20}
+
   proxy-addr@2.0.7:
     resolution: {integrity: sha512-llQsMLSUDUPT44jdrU/O37qlnifitDP+ZwrmmZcoSKyLKvtZxpyV0n2/bD/N4tBAAZ/gJEdZU7KMraoK1+XYAg==}
     engines: {node: '>= 0.10'}
@@ -1636,6 +1705,9 @@ packages:
   supports-color@7.2.0:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
+
+  tdigest@0.1.2:
+    resolution: {integrity: sha512-+G0LLgjjo9BZX2MfdvPfH+MKLCrxlXSYec5DaPYP1fe6Iyhf0/fSmJ0bFiZ1F8BT6cGXl2LpltQptzjXKWEkKA==}
 
   to-buffer@1.2.2:
     resolution: {integrity: sha512-db0E3UJjcFhpDhAF4tLo03oli3pwl3dbnzXOUIlRKrp+ldk/VUxzpWYZENsw2SZiuBjHAk7DfB0VU7NKdpb6sw==}
@@ -2067,6 +2139,8 @@ snapshots:
     transitivePeerDependencies:
       - encoding
 
+  '@opentelemetry/api@1.9.1': {}
+
   '@pkgjs/parseargs@0.11.0':
     optional: true
 
@@ -2235,6 +2309,8 @@ snapshots:
   base64-js@1.5.1: {}
 
   base64id@2.0.0: {}
+
+  bintrees@1.0.2: {}
 
   body-parser@1.20.4:
     dependencies:
@@ -2975,6 +3051,11 @@ snapshots:
     dependencies:
       xtend: 4.0.2
 
+  prom-client@15.1.3:
+    dependencies:
+      '@opentelemetry/api': 1.9.1
+      tdigest: 0.1.2
+
   proxy-addr@2.0.7:
     dependencies:
       forwarded: 0.2.0
@@ -3230,6 +3311,10 @@ snapshots:
   supports-color@7.2.0:
     dependencies:
       has-flag: 4.0.0
+
+  tdigest@0.1.2:
+    dependencies:
+      bintrees: 1.0.2
 
   to-buffer@1.2.2:
     dependencies:

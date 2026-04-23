@@ -4,7 +4,7 @@ Repositorio que implementa HexBet, un motor de apuestas modular. Proporciona una
 
 Estado base: Phase 0/1 — bootstrap con `pnpm` workspaces + Turborepo e infraestructura local con Docker Compose.
 
-Estado actual: avance hasta Phase 8 con Settlement Service completo (liquidación automática de apuestas al terminar partidos)
+Estado actual: advance hasta Phase 9 con observabilidad completa (Prometheus + Grafana)
 
 Resumen
 - Propósito: implementación y demostración técnica de un motor de apuestas modular.
@@ -23,6 +23,7 @@ Características principales
 - API Gateway con autenticación JWT, rate limiting y proxying HTTP.
 - WebSocket para streaming de cuotas en tiempo real.
 - Settlement Service con liquidación automática de apuestas.
+- Observabilidad con Prometheus + Grafana (métricas HTTP, memoria, CPU)
 
 Tecnologías
 - Node.js 18+
@@ -69,6 +70,11 @@ pnpm --filter ./apps/* dev
 - Verificar health del Gateway: `curl http://localhost:3000/health`
 - Proxificar a bet-service: `curl http://localhost:3000/bet-service/matches/live`
 
+### Observabilidad
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001 (admin/admin)
+- Generar JWT para pruebas: `curl -X POST http://localhost:3000/auth/token -H "Content-Type: application/json" -d '{"userId":"uuid","email":"test@test.com"}'`
+
 Uso rápido del simulador
 - Modo normal (por defecto): usa el `matchId` definido en el JSON del escenario.
 - Modo fresh (`--fresh-match-ids`): regenera `matchId` en memoria por corrida para crear partidos nuevos sin modificar archivos `.json`.
@@ -78,6 +84,10 @@ Infraestructura incluida en Phase 1
 - Kafka (single-broker) + inicialización automática de topics
 - PostgreSQL + schemas base (`odds_engine`, `bet_service`, `settlement`)
 - Redis
+
+Infraestructura de Observabilidad (Phase 9)
+- Prometheus (métricas)
+- Grafana (dashboards)
 
 Para usar valores personalizados, copia `.env.example` a `.env` y ajusta puertos/credenciales locales.
 
@@ -91,6 +101,7 @@ Documentacion adicional:
 - `docs/PHASE6_SUMMARY.md`
 - `docs/PHASE7_SUMMARY.md`
 - `docs/PHASE8_SUMMARY.md`
+- `docs/PHASE9_SUMMARY.md`
 - `docs/DEVELOPMENT.md`
 
 Estructura resumida
@@ -99,6 +110,7 @@ Estructura resumida
 - `apps/odds-engine` — Cálculo y actualización de cuotas.
 - `apps/settlement` — Lógica de liquidación.
 - `packages/shared-kernel` — Eventos, tipos e interfaces compartidas.
+- `packages/observability` — Métricas Prometheus e interceptores.
 
 Demostración / Ejemplo de uso
 - El `simulator` permite generar flujos (creación de evento, apuestas, cambios de cuota, liquidación) para pruebas locales.

@@ -1,6 +1,7 @@
 import { Controller, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
 import { MatchEvent } from '@betting-engine/shared-kernel';
+import { kafkaMessagesProcessed } from '@betting-engine/observability';
 import { ProcessMatchEventUseCase } from '../../../../application/use-cases/process-match-event.use-case';
 import { RecalculateOddsUseCase } from '../../../../application/use-cases/recalculate-odds.use-case';
 
@@ -40,6 +41,7 @@ export class MatchEventsConsumer {
 
     try {
       const result = await this.processMatchEventUseCase.execute(event);
+      kafkaMessagesProcessed.labels('match.events', event.type, 'processed').inc();
 
       if (result.status === 'processed' && result.matchState) {
         const recalculation = await this.recalculateOddsUseCase.execute({
@@ -56,7 +58,9 @@ export class MatchEventsConsumer {
       this.logger.log(
         `DUPLICATE event ${event.type} for match ${event.matchId} from ${topic}[${partition}]@${offset}`,
       );
+      kafkaMessagesProcessed.labels('match.events', event.type, 'duplicate').inc();
     } catch (error) {
+      kafkaMessagesProcessed.labels('match.events', event.type, 'error').inc();
       const message = error instanceof Error ? error.message : 'unknown error';
       this.logger.error(
         `Failed processing event ${event.id} (${event.type}) for match ${event.matchId} from ${topic}[${partition}]@${offset}: ${message}`,

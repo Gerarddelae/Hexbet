@@ -1,12 +1,15 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { HealthController } from './health.controller';
+import { MetricsController } from './metrics.controller';
 import { SettleMatchUseCase } from './application/use-cases/settle-match.use-case';
 import { MatchEventsConsumer } from './infrastructure/adapters/inbound/kafka/match-events.consumer';
 import { BetPlacedConsumer } from './infrastructure/adapters/inbound/kafka/bet-placed.consumer';
 import { BetServiceHttpClient, BET_SERVICE_HTTP_CLIENT } from './infrastructure/adapters/outbound/http/bet-service-http.client';
 import { ProcessedMatchRepository } from './infrastructure/adapters/outbound/postgres/processed-match.repository';
 import { PROCESSED_MATCH_REPOSITORY } from './domain/ports/processed-match-repository.port';
+import { MetricsInterceptor } from '@betting-engine/observability';
 
 function parsePort(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -28,7 +31,7 @@ function parsePort(value: string | undefined, fallback: number): number {
       },
     ]),
   ],
-  controllers: [HealthController, MatchEventsConsumer],
+  controllers: [HealthController, MetricsController, MatchEventsConsumer],
   providers: [
     SettleMatchUseCase,
     BetPlacedConsumer,
@@ -39,6 +42,10 @@ function parsePort(value: string | undefined, fallback: number): number {
     {
       provide: PROCESSED_MATCH_REPOSITORY,
       useClass: ProcessedMatchRepository,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })

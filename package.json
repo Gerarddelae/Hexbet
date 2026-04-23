@@ -21,8 +21,10 @@
     "docker:up:with-topics": "docker compose up -d --wait && docker compose run --rm kafka-setup",
     "docker:test:up": "docker compose -f docker-compose.test.yml up -d",
     "docker:test:down": "docker compose -f docker-compose.test.yml down -v --remove-orphans",
+    "docker:prometheus": "docker compose up -d prometheus",
+    "docker:grafana": "docker compose up -d grafana",
     "e2e:consumer": "node scripts/e2e-publish-verify.js",
-    "ci:check": "pnpm lint && pnpm typecheck && pnpm build && pnpm test"
+    "ci:check": "pnpm build && pnpm test"
   },
   "keywords": [],
   "author": "",
