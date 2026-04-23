@@ -20,6 +20,7 @@ export class InitBetServiceSchema1710000000002 implements MigrationInterface {
         selection VARCHAR(8) NOT NULL,
         accepted_odds NUMERIC(8,3) NOT NULL,
         stake_cents BIGINT NOT NULL,
+        payout_cents BIGINT,
         status VARCHAR(16) NOT NULL DEFAULT 'OPEN',
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )

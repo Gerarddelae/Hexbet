@@ -1,4 +1,5 @@
 import { Injectable, Logger, Inject } from '@nestjs/common';
+import { ClientKafka } from '@nestjs/microservices';
 import { v4 as uuidv4 } from 'uuid';
 import type { UserRepositoryPort } from '../../domain/ports/user-repository.port.js';
 import type { BetRepositoryPort } from '../../domain/ports/bet-repository.port.js';
@@ -29,6 +30,7 @@ export class PlaceBetUseCase {
     @Inject(USER_REPOSITORY_PORT) private readonly userRepository: UserRepositoryPort,
     @Inject(BET_REPOSITORY_PORT) private readonly betRepository: BetRepositoryPort,
     @Inject(ODDS_PROVIDER_PORT) private readonly oddsProvider: OddsProviderPort,
+    @Inject('KAFKA_CLIENT') private readonly kafkaClient: ClientKafka | undefined,
   ) {}
 
   async execute(input: PlaceBetInput): Promise<PlaceBetOutput> {
@@ -70,7 +72,33 @@ export class PlaceBetUseCase {
 
     this.logger.log(`Bet placed: ${bet.id} by user ${userId} for ${stakeCents} cents at ${acceptedOdds} odds`);
 
+    await this.publishBetPlacedEvent(bet);
+
     return { success: true, bet };
+  }
+
+  private async publishBetPlacedEvent(bet: Bet): Promise<void> {
+    if (!this.kafkaClient) {
+      this.logger.warn('Kafka client not available, skipping bet.placed event');
+      return;
+    }
+
+    const event = {
+      betId: bet.id,
+      userId: bet.userId,
+      matchId: bet.matchId,
+      selection: bet.selection,
+      acceptedOdds: bet.acceptedOdds,
+      stakeCents: bet.stakeCents,
+      timestamp: new Date().toISOString(),
+    };
+
+    this.logger.log(`Publishing bet.placed event for bet ${bet.id}`);
+
+    this.kafkaClient.emit('bet.placed', {
+      key: bet.userId,
+      value: event,
+    });
   }
 }
 

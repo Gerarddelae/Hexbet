@@ -1,11 +1,14 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import type { Bet, BetStatus } from '../../../../domain/entities/bet.entity.js';
 import type { BetRepositoryPort } from '../../../../domain/ports/bet-repository.port.js';
 
 @Injectable()
 export class PostgresBetRepository implements BetRepositoryPort {
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource() private readonly dataSource: DataSource,
+  ) {}
 
   async save(bet: Omit<Bet, 'createdAt'>): Promise<Bet> {
     const result = await this.dataSource.query(
@@ -45,6 +48,29 @@ export class PostgresBetRepository implements BetRepositoryPort {
     return result.map((row: any) => this.mapRowToBet(row));
   }
 
+  async findByMatch(matchId: string): Promise<Bet[]> {
+    const result = await this.dataSource.query(
+      'SELECT * FROM bet_service.bets WHERE match_id = $1 ORDER BY created_at DESC',
+      [matchId],
+    );
+    return result.map((row: any) => this.mapRowToBet(row));
+  }
+
+  async findPendingByMatch(matchId: string, status: BetStatus): Promise<Bet[]> {
+    const result = await this.dataSource.query(
+      'SELECT * FROM bet_service.bets WHERE match_id = $1 AND status = $2 ORDER BY created_at DESC',
+      [matchId, status],
+    );
+    return result.map((row: any) => this.mapRowToBet(row));
+  }
+
+  async settleBet(betId: string, status: BetStatus, payoutCents: number): Promise<void> {
+    await this.dataSource.query(
+      'UPDATE bet_service.bets SET status = $1, payout_cents = $2 WHERE id = $3',
+      [status, payoutCents, betId],
+    );
+  }
+
   async updateStatus(betId: string, status: BetStatus): Promise<void> {
     await this.dataSource.query(
       'UPDATE bet_service.bets SET status = $1 WHERE id = $2',
@@ -60,6 +86,7 @@ export class PostgresBetRepository implements BetRepositoryPort {
       selection: row.selection,
       acceptedOdds: Number(row.accepted_odds),
       stakeCents: Number(row.stake_cents),
+      payoutCents: row.payout_cents ? Number(row.payout_cents) : undefined,
       status: row.status,
       createdAt: row.created_at,
     };

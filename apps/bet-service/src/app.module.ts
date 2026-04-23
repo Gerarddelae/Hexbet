@@ -1,8 +1,10 @@
-import { Module, Logger } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
+import { Module, Logger, Inject } from '@nestjs/common';
+import { TypeOrmModule, InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { ClientsModule, Transport } from '@nestjs/microservices';
 import { MatchesController } from './interface/http/matches.controller.js';
 import { BetsController } from './interface/http/bets.controller.js';
+import { InternalBetsController } from './interface/http/internal-bets.controller.js';
 import { HealthController } from './health.controller.js';
 import { GetLiveMatchesUseCase } from './application/use-cases/get-live-matches.use-case.js';
 import { PlaceBetUseCase } from './application/use-cases/place-bet.use-case.js';
@@ -28,8 +30,20 @@ function parsePort(value: string | undefined, fallback: number): number {
       database: process.env.POSTGRES_DB_SERVICE ?? process.env.POSTGRES_DB ?? 'betting_engine',
       synchronize: false,
     }),
+    ClientsModule.register([
+      {
+        name: 'KAFKA_CLIENT',
+        transport: Transport.KAFKA,
+        options: {
+          client: {
+            brokers: [process.env.KAFKA_BROKER ?? 'localhost:9092'],
+          },
+          producer: { allowAutoTopicCreation: false },
+        },
+      },
+    ]),
   ],
-  controllers: [MatchesController, BetsController, HealthController, OddsEventsConsumer],
+  controllers: [MatchesController, BetsController, InternalBetsController, HealthController, OddsEventsConsumer],
   providers: [
     GetLiveMatchesUseCase,
     PlaceBetUseCase,

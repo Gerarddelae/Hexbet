@@ -1,4 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, Inject } from '@nestjs/common';
+import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import type { UserRepositoryPort } from '../../../../domain/ports/user-repository.port';
 
@@ -6,7 +7,9 @@ import type { UserRepositoryPort } from '../../../../domain/ports/user-repositor
 export class PostgresUserRepository implements UserRepositoryPort {
   private readonly logger = new Logger(PostgresUserRepository.name);
 
-  constructor(private readonly dataSource: DataSource) {}
+  constructor(
+    @InjectDataSource() private readonly dataSource: DataSource,
+  ) {}
 
   async findById(id: string): Promise<{ id: string; balanceCents: number; createdAt: Date } | null> {
     const result = await this.dataSource.query(
@@ -34,6 +37,17 @@ export class PostgresUserRepository implements UserRepositoryPort {
       `UPDATE bet_service.users 
        SET balance_cents = balance_cents - $1 
        WHERE id = $2 AND balance_cents >= $1 
+       RETURNING id`,
+      [amountCents, userId],
+    );
+    return result.length > 0;
+  }
+
+  async creditBalance(userId: string, amountCents: number): Promise<boolean> {
+    const result = await this.dataSource.query(
+      `UPDATE bet_service.users 
+       SET balance_cents = balance_cents + $1 
+       WHERE id = $2 
        RETURNING id`,
       [amountCents, userId],
     );
