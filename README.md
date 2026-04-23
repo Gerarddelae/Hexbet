@@ -4,7 +4,7 @@ Repositorio que implementa HexBet, un motor de apuestas modular. Proporciona una
 
 Estado base: Phase 0/1 — bootstrap con `pnpm` workspaces + Turborepo e infraestructura local con Docker Compose.
 
-Estado actual: avance hasta Phase 5 con API Gateway operativa (JWT, rate limiting, proxying HTTP, WebSocket streaming).
+Estado actual: avance hasta Phase 7 con Bet Service completo (place bet + endpoints internos para Settlement)
 
 Resumen
 - Propósito: implementación y demostración técnica de un motor de apuestas modular.
@@ -87,6 +87,8 @@ Documentacion adicional:
 - `docs/PHASE3_SUMMARY.md`
 - `docs/PHASE4_SUMMARY.md`
 - `docs/PHASE5_SUMMARY.md`
+- `docs/PHASE6_SUMMARY.md`
+- `docs/PHASE7_SUMMARY.md`
 - `docs/DEVELOPMENT.md`
 
 Estructura resumida
