@@ -1,6 +1,7 @@
 import { Controller, Logger } from '@nestjs/common';
 import { EventPattern, Payload, Ctx, KafkaContext } from '@nestjs/microservices';
 import { Redis } from 'ioredis';
+import { kafkaMessagesProcessed } from '@betting-engine/observability';
 
 @Controller()
 export class OddsEventsConsumer {
@@ -19,10 +20,16 @@ export class OddsEventsConsumer {
     @Payload() event: { matchId: string; odds: any },
     @Ctx() context: KafkaContext,
   ): Promise<void> {
-    const msg = context.getMessage();
-    this.logger.log(`Received odds update: match ${event.matchId}`);
+    try {
+      const msg = context.getMessage();
+      this.logger.log(`Received odds update: match ${event.matchId}`);
 
-    await this.redis.set(`odds:${event.matchId}`, JSON.stringify(event.odds), 'EX', 300);
+      await this.redis.set(`odds:${event.matchId}`, JSON.stringify(event.odds), 'EX', 300);
+      kafkaMessagesProcessed.labels('odds.updated', 'ODDS_UPDATE', 'success').inc();
+    } catch (error) {
+      kafkaMessagesProcessed.labels('odds.updated', 'ODDS_UPDATE', 'error').inc();
+      this.logger.error(`Error processing odds update: ${error}`);
+    }
   }
 }
 

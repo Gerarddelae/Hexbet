@@ -2,6 +2,7 @@ import { Injectable, Inject, Logger } from '@nestjs/common';
 import { Ctx, EventPattern, KafkaContext, Payload } from '@nestjs/microservices';
 import { ClientKafka } from '@nestjs/microservices';
 import { BetPlacedEvent } from '@betting-engine/shared-kernel';
+import { kafkaMessagesProcessed } from '@betting-engine/observability';
 
 @Injectable()
 export class BetPlacedConsumer {
@@ -22,24 +23,31 @@ export class BetPlacedConsumer {
     @Payload() payload: unknown,
     @Ctx() context: KafkaContext,
   ): Promise<void> {
-    const event = this.extractEventPayload(payload);
+    try {
+      const event = this.extractEventPayload(payload);
 
-    if (!this.isBetPlacedEvent(event)) {
-      this.logger.warn('Skipping invalid bet.placed payload');
-      return;
+      if (!this.isBetPlacedEvent(event)) {
+        this.logger.warn('Skipping invalid bet.placed payload');
+        kafkaMessagesProcessed.labels('bet.placed', 'BET_PLACED', 'invalid').inc();
+        return;
+      }
+
+      const topic = context.getTopic();
+      const partition = context.getPartition();
+      const offset = context.getMessage().offset;
+
+      this.logger.log(
+        `Received bet.placed for match ${event.matchId} bet ${event.betId} user ${event.userId} from ${topic}[${partition}]@${offset}`,
+      );
+
+      const betsForMatch = this.pendingBets.get(event.matchId) ?? [];
+      betsForMatch.push(event);
+      this.pendingBets.set(event.matchId, betsForMatch);
+      kafkaMessagesProcessed.labels('bet.placed', 'BET_PLACED', 'success').inc();
+    } catch (error) {
+      kafkaMessagesProcessed.labels('bet.placed', 'BET_PLACED', 'error').inc();
+      this.logger.error(`Error processing bet.placed: ${error}`);
     }
-
-    const topic = context.getTopic();
-    const partition = context.getPartition();
-    const offset = context.getMessage().offset;
-
-    this.logger.log(
-      `Received bet.placed for match ${event.matchId} bet ${event.betId} user ${event.userId} from ${topic}[${partition}]@${offset}`,
-    );
-
-    const betsForMatch = this.pendingBets.get(event.matchId) ?? [];
-    betsForMatch.push(event);
-    this.pendingBets.set(event.matchId, betsForMatch);
   }
 
   getBetsForMatch(matchId: string): BetPlacedEvent[] {

@@ -53,8 +53,20 @@
 
 Todos exponen:
 - GET /health
+- GET /metrics (Prometheus)
 
 > Importante: Los clientes **NUNCA** se comunican directamente con los microservicios. Toda comunicación pasa por `api-gateway` (Fase 5 implementada).
+
+## Puertos de Servicios
+
+| Servicio | Puerto | Descripción |
+|----------|--------|-------------|
+| api-gateway | 3000 | Punto único de entrada |
+| odds-engine | 3001 | Engine de cuotas |
+| bet-service | 3002 | Servicio de apuestas |
+| settlement | 3003 | Liquidación de apuestas |
+| **Prometheus** | **9090** | **Métricas** |
+| **Grafana** | **3001** | **Dashboards** (admin/admin) |
 
 ## HU-002 (Odds Engine) - Flujo de Validacion
 
@@ -166,6 +178,23 @@ Implementación completa en `apps/api-gateway/` con:
 - `GatewayController` - catch-all route `/:service/*`
 - `OddsStreamGateway` - WebSocket namespace `stream/odds`
 
+### Endpoint de Autenticación (Dev)
+
+Para facilitar pruebas, existe un endpoint de generación de JWT:
+
+```bash
+# Generar token
+curl -X POST http://localhost:3000/auth/token \
+  -H "Content-Type: application/json" \
+  -d '{"userId":"uuid","email":"test@test.com"}'
+
+# Usar token para apuestas
+curl -X POST http://localhost:3000/bet-service/bets \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer TOKEN_AQUI" \
+  -d '{"userId":"uuid","matchId":"...","selection":"HOME","stakeCents":1000}'
+```
+
 ### Validación
 
 1. Verificar calidad:
@@ -224,3 +253,64 @@ Variables usadas por HU-003 en odds-engine:
 3. Topics no listan:
    - Verifica que kafka este healthy en pnpm docker:ps.
    - Reintenta pnpm docker:topics.
+
+## Observabilidad (Fase 9)
+
+### Prometheus + Grafana
+
+El proyecto incluye observabilidad con Prometheus y Grafana:
+
+```bash
+# Levantar toda la infraestructura (incluye prometheus + grafana)
+pnpm docker:up
+
+# URLs de acceso
+# Prometheus: http://localhost:9090
+# Grafana: http://localhost:3001 (admin/admin)
+```
+
+### Métricas Disponibles
+
+Cada servicio expone `/metrics` con:
+
+- Métricas de infraestructura: CPU, memoria, event loop lag
+- Métricas HTTP: requests/s, latencia por endpoint
+- Métricas de negocio: definidas disponibles para instrumentar
+
+### Verificar Targets en Prometheus
+
+```bash
+curl http://localhost:9090/api/v1/targets
+```
+
+Debes ver 4 targets activos:
+- api-gateway (3000)
+- odds-engine (3001)
+- bet-service (3002)
+- settlement (3003)
+
+### Queries Útiles en Grafana
+
+```promql
+# Requests por segundo
+rate(http_requests_total[5m])
+
+# Latencia p95
+histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))
+
+# Memoria RSS
+process_resident_memory_bytes
+```
+
+### Scripts Docker
+
+```bash
+pnpm docker:prometheus   # Solo prometheus + grafana (si ya tienes infra)
+```
+
+### Dashboard Pre-configurado
+
+Grafana viene con dashboard "Bet Engine" pre-configurado:
+- HTTP requests/s por servicio
+- Latencia p50/p95/p99
+- Memoria y CPU

@@ -1,4 +1,5 @@
 import { Module, Logger, Inject } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule, InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { ClientsModule, Transport } from '@nestjs/microservices';
@@ -6,6 +7,7 @@ import { MatchesController } from './interface/http/matches.controller.js';
 import { BetsController } from './interface/http/bets.controller.js';
 import { InternalBetsController } from './interface/http/internal-bets.controller.js';
 import { HealthController } from './health.controller.js';
+import { MetricsController } from './metrics.controller.js';
 import { GetLiveMatchesUseCase } from './application/use-cases/get-live-matches.use-case.js';
 import { PlaceBetUseCase } from './application/use-cases/place-bet.use-case.js';
 import { PostgresUserRepository, USER_REPOSITORY_PORT } from './infrastructure/adapters/outbound/postgres/postgres-user.repository.js';
@@ -13,6 +15,7 @@ import { PostgresBetRepository, BET_REPOSITORY_PORT } from './infrastructure/ada
 import { PostgresMatchRepository, MATCH_REPOSITORY_PORT } from './infrastructure/adapters/outbound/postgres/postgres-match.repository.js';
 import { RedisOddsProvider, ODDS_PROVIDER_PORT } from './infrastructure/adapters/outbound/redis/redis-odds.provider.js';
 import { OddsEventsConsumer } from './infrastructure/adapters/inbound/kafka/odds-events.consumer.js';
+import { MetricsInterceptor } from '@betting-engine/observability';
 
 function parsePort(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -43,7 +46,7 @@ function parsePort(value: string | undefined, fallback: number): number {
       },
     ]),
   ],
-  controllers: [MatchesController, BetsController, InternalBetsController, HealthController, OddsEventsConsumer],
+  controllers: [MatchesController, BetsController, InternalBetsController, HealthController, MetricsController, OddsEventsConsumer],
   providers: [
     GetLiveMatchesUseCase,
     PlaceBetUseCase,
@@ -62,6 +65,10 @@ function parsePort(value: string | undefined, fallback: number): number {
     {
       provide: ODDS_PROVIDER_PORT,
       useClass: RedisOddsProvider,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })

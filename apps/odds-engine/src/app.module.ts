@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ProcessMatchEventUseCase } from './application/use-cases/process-match-event.use-case';
 import { RecalculateOddsUseCase } from './application/use-cases/recalculate-odds.use-case';
@@ -11,6 +12,8 @@ import { PostgresMatchRepository } from './infrastructure/adapters/outbound/post
 import { RedisKafkaOddsPublisher } from './infrastructure/adapters/outbound/messaging/redis-kafka-odds.publisher';
 import { MatchEventsConsumer } from './infrastructure/adapters/inbound/kafka/match-events.consumer';
 import { HealthController } from './health.controller';
+import { MetricsController } from './metrics.controller';
+import { MetricsInterceptor } from '@betting-engine/observability';
 
 function parsePort(value: string | undefined, fallback: number): number {
   const parsed = Number(value);
@@ -31,7 +34,7 @@ function parsePort(value: string | undefined, fallback: number): number {
       synchronize: false,
     }),
   ],
-  controllers: [HealthController, MatchEventsConsumer],
+  controllers: [HealthController, MetricsController, MatchEventsConsumer],
   providers: [
     ProcessMatchEventUseCase,
     RecalculateOddsUseCase,
@@ -43,6 +46,10 @@ function parsePort(value: string | undefined, fallback: number): number {
     {
       provide: ODDS_PUBLISHER_PORT,
       useClass: RedisKafkaOddsPublisher,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: MetricsInterceptor,
     },
   ],
 })

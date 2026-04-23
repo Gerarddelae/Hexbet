@@ -22,7 +22,8 @@ betting-engine/
 │   └── settlement/
 │
 ├── packages/                      # Código compartido entre servicios
-│   └── shared-kernel/
+│   ├── shared-kernel/             # Tipos y eventos compartidos
+│   └── observability/             # Métricas Prometheus, interceptors
 │
 ├── simulator/                     # Herramienta de desarrollo/demo
 │

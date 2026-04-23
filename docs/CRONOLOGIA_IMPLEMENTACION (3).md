@@ -1845,8 +1845,17 @@ Este patrón permite responder preguntas como: "¿Qué pasó con la apuesta del 
          ▼
 ┌─────────────────┐
 │  Fase 8         │
+│  settlement     │
+│  liquida apuestas│
+│  (NestJS)       │
+└────────┬────────┘
+          │
+          ▼
+┌─────────────────┐
+│  Fase 9         │
 │  observabilidad │
-│  health/logs    │
+│  Prometheus +   │
+│  Grafana        │
 └─────────────────┘
 ```
 
@@ -1877,7 +1886,9 @@ El proyecto se considera completo cuando todos estos checks pasan simultáneamen
 | 9 | Apuestas se liquidan al terminar | 8 | `SELECT status FROM bet_service.bets` |
 | 10 | Settlement sobrevive a reinicio | 8 | `docker-compose restart settlement` |
 | 11 | Tests unitarios pasan | todas | `pnpm test` |
-| 12 | Healthchecks responden | 9 | `curl http://localhost:3000/health` |
+| 12 | Healthchecks responden | todas | `curl http://localhost:3000/health` |
+| 13 | Prometheus + Grafana operativos | 9 | `curl http://localhost:9090/api/v1/targets` |
+| 14 | Métricas HTTP disponibles | 9 | `curl http://localhost:3000/metrics \| grep http_request` |
 
 Estos criterios garantizan que cada componente funciona correctamente y que la integración entre componentes está verificada. La ausencia de un solo criterio indica que hay una fase incompleta o una conexión rota entre fases.
 
@@ -1938,7 +1949,7 @@ Las Fases cinco, seis, siete y ocho deben implementarse secuencialmente porque c
 | 6 | Bet Service (consulta) | 2 días | Fase 3, 5 |
 | 7 | Bet Service (apuestas) | 3 días | Fase 6 |
 | 8 | Settlement | 3 días | Fase 7 |
-| 9 | Observabilidad | 1 día | Todas |
+| 9 | Observabilidad (Prometheus + Grafana) | 2 días | Todas |
 
 ---
 

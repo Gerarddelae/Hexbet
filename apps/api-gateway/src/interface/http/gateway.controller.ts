@@ -1,6 +1,8 @@
 import { All, Req, Res, Param, Logger, Controller, Inject } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { ProxyRequestUseCase } from '../../application/use-cases/proxy-request.use-case';
+import { JwtAuthAdapter } from '../../infrastructure/adapters/jwt-auth.adapter';
+import { JWT_AUTH_ADAPTER } from '../../domain/ports';
 
 @Controller()
 export class GatewayController {
@@ -8,7 +10,36 @@ export class GatewayController {
 
   constructor(
     @Inject(ProxyRequestUseCase) private readonly proxyRequestUseCase: ProxyRequestUseCase,
+    @Inject(JWT_AUTH_ADAPTER) private readonly jwtAuthAdapter: JwtAuthAdapter,
   ) {}
+
+  @All('auth/token')
+  async handleAuthToken(@Req() req: Request, @Res() res: Response): Promise<void> {
+    this.logger.log(`Auth token request: ${req.method} - body: ${JSON.stringify(req.body)}`);
+
+    if (req.method === 'POST') {
+      try {
+        const { userId, email } = req.body;
+        this.logger.log(`Generating token for userId: ${userId}, email: ${email}`);
+        
+        if (!userId || !email) {
+          res.status(400).json({ error: 'userId and email are required' });
+          return;
+        }
+
+        const token = await this.jwtAuthAdapter.generateToken({ userId, email });
+        this.logger.log(`Token generated successfully`);
+        res.status(201).json({ token });
+        return;
+      } catch (error) {
+        this.logger.error(`Error generating token: ${error}`);
+        res.status(500).json({ error: 'Failed to generate token', details: String(error) });
+        return;
+      }
+    }
+
+    res.status(404).json({ error: 'Not found' });
+  }
 
   @All(':service/*')
   async proxyRequest(
