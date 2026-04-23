@@ -8,6 +8,7 @@ export interface Bet {
   selection: BetSelection;
   acceptedOdds: number;
   stakeCents: number;
+  payoutCents?: number;
   status: BetStatus;
   createdAt: Date;
 }
