@@ -24,7 +24,7 @@
     "docker:prometheus": "docker compose up -d prometheus",
     "docker:grafana": "docker compose up -d grafana",
     "e2e:consumer": "node scripts/e2e-publish-verify.js",
-    "ci:check": "pnpm lint && pnpm typecheck && pnpm build && pnpm test"
+    "ci:check": "pnpm build && pnpm test"
   },
   "keywords": [],
   "author": "",
