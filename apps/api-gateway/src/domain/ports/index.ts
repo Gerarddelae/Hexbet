@@ -59,3 +59,7 @@ export interface ProxyRequestDto {
   body?: unknown;
   authToken?: string;
 }
+
+export const AUTH_PROVIDER_PORT = 'AUTH_PROVIDER_PORT';
+export const RATE_LIMITER_PORT = 'RATE_LIMITER_PORT';
+export const SERVICE_ROUTER_PORT = 'SERVICE_ROUTER_PORT';

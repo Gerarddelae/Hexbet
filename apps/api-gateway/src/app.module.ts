@@ -9,6 +9,7 @@ import { JwtAuthAdapter } from './infrastructure/adapters/jwt-auth.adapter';
 import { HttpServiceRouterAdapter } from './infrastructure/adapters/http-service-router.adapter';
 import { RedisRateLimiterAdapter } from './infrastructure/adapters/redis-rate-limiter.adapter';
 import { jwtConfig } from './infrastructure/config/services.config';
+import { AUTH_PROVIDER_PORT, RATE_LIMITER_PORT, SERVICE_ROUTER_PORT } from './domain/ports';
 
 @Module({
   imports: [
@@ -25,16 +26,17 @@ import { jwtConfig } from './infrastructure/config/services.config';
   providers: [
     ProxyRequestUseCase,
     OddsStreamGateway,
+    HttpServiceRouterAdapter,
     {
-      provide: 'AuthProviderPort',
+      provide: AUTH_PROVIDER_PORT,
       useClass: JwtAuthAdapter,
     },
     {
-      provide: 'ServiceRouterPort',
+      provide: SERVICE_ROUTER_PORT,
       useClass: HttpServiceRouterAdapter,
     },
     {
-      provide: 'RateLimiterPort',
+      provide: RATE_LIMITER_PORT,
       useClass: RedisRateLimiterAdapter,
     },
   ],

@@ -16,6 +16,33 @@ Implementar la API Gateway como punto único de entrada para los clientes, propo
 - **Route Configuration**: Definición de rutas públicas vs protegidas
 - **OddsStreamGateway**: WebSocket para streaming de cuotas en tiempo real
 
+### Bugfix: Inyección de Dependencias en API Gateway (2026-04-22)
+
+**Problema**: La API Gateway fallaba con `Cannot read properties of undefined (reading 'execute')`. La causa raíz fueron múltiples problemas de inyección de dependencias:
+
+1. **ProxyRequestUseCase no injectado**: NestJS no podía injectar `ProxyRequestUseCase` en `GatewayController`
+2. **Tokens de string inconsistentes**: Los tokens `'AuthProviderPort'`, `'RateLimiterPort'`, `'ServiceRouterPort'` no se resolvían correctamente
+3. **HttpService no injectado**: `@nestjs/axios` tiene problemas conocidos de inyección con el token `AXIOS_INSTANCE_TOKEN`
+
+**Solución**:
+- Crear constantes exportadas para tokens en `domain/ports/index.ts`
+- Usar `@Inject(Token)` en todos los constructores
+- Para `HttpServiceRouterAdapter`: crear instancia `axios` directamente en el constructor en lugar de usar `HttpService` de NestJS
+
+```typescript
+// domain/ports/index.ts
+export const AUTH_PROVIDER_PORT = 'AUTH_PROVIDER_PORT';
+export const RATE_LIMITER_PORT = 'RATE_LIMITER_PORT';
+export const SERVICE_ROUTER_PORT = 'SERVICE_ROUTER_PORT';
+
+// http-service-router.adapter.ts
+constructor() {
+  this.axiosInstance = axios.create({ timeout: this.timeout });
+}
+```
+
+**Decisión de diseño**: Usar `axios` directamente en `HttpServiceRouterAdapter` en lugar de `HttpService` de NestJS. Esto evita los problemas de inyección documentados en la comunidad de NestJS con `@nestjs/axios`.
+
 ## Exclusiones
 
 - No se implementó endpoint de ingestión de webhooks (queda para fase futura)

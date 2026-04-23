@@ -24,6 +24,10 @@ class FakeOddsPublisher implements OddsPublisherPort {
     this.publishedRedis.push({ matchId, odds });
   }
 
+  async deleteOdds(matchId: string): Promise<void> {
+    this.redisCalls += 1;
+  }
+
   async publishToKafka(event: OddsUpdatedEvent): Promise<void> {
     this.kafkaCalls += 1;
 

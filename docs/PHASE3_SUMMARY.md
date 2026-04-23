@@ -68,6 +68,16 @@ Implementar HU-003 en odds-engine: recalcular cuotas en tiempo real a partir de 
 - `REDIS_PORT` (default: `6379`)
 - `KAFKA_BROKERS` (default: `localhost:9092`)
 
+## Mejora: Limpieza de Redis al Terminar Partido (2026-04-22)
+
+Cuando llega un evento `MATCH_END`, el `RecalculateOddsUseCase`:
+1. Calcula las cuotas finales (para el registro)
+2. **Llama a `oddsPublisher.deleteOdds(matchId)`** para borrar la key `odds:{matchId}` de Redis
+
+Esto garantiza que el partido terminado no aparece en `/matches/live` de bet-service.
+
+El filtro adicional `WHERE status = 'LIVE'` en bet-service actúa como capa de seguridad redundante.
+
 ## Fuera de Alcance de Esta Entrega
 
 - HU-004+ (implementacion funcional completa de bet-service).

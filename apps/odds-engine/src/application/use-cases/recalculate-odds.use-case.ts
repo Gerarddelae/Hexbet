@@ -18,8 +18,8 @@ export interface RecalculateOddsResult {
   status: 'published' | 'partial_failure' | 'failed';
   odds: OddsSnapshot;
   publication: {
-    redis: 'ok' | 'failed';
-    kafka: 'ok' | 'failed';
+    redis: 'ok' | 'failed' | 'deleted';
+    kafka: 'ok' | 'failed' | 'skipped';
   };
 }
 
@@ -42,6 +42,16 @@ export class RecalculateOddsUseCase {
       odds,
       triggeredByEventId: input.event.id,
     };
+
+    if (input.event.type === 'MATCH_END') {
+      this.logger.log(`MATCH_END detected for ${input.event.matchId}, clearing odds cache`);
+      await this.oddsPublisher.deleteOdds(input.event.matchId);
+      return {
+        status: 'published',
+        odds,
+        publication: { redis: 'deleted', kafka: 'skipped' },
+      };
+    }
 
     const [redisResult, kafkaResult] = await Promise.allSettled([
       this.executeWithRetry(

@@ -7,6 +7,9 @@ import {
   ForwardResponse,
   RateLimitConfig,
   RouteConfig,
+  AUTH_PROVIDER_PORT,
+  RATE_LIMITER_PORT,
+  SERVICE_ROUTER_PORT,
 } from '../../domain/ports';
 import { routes } from '../../infrastructure/config/services.config';
 
@@ -15,11 +18,11 @@ export class ProxyRequestUseCase {
   private readonly logger = new Logger(ProxyRequestUseCase.name);
 
   constructor(
-    @Inject('AuthProviderPort')
+    @Inject(AUTH_PROVIDER_PORT)
     private readonly authProvider: AuthProviderPort,
-    @Inject('RateLimiterPort')
+    @Inject(RATE_LIMITER_PORT)
     private readonly rateLimiter: RateLimiterPort,
-    @Inject('ServiceRouterPort')
+    @Inject(SERVICE_ROUTER_PORT)
     private readonly serviceRouter: ServiceRouterPort,
   ) {}
 

@@ -831,12 +831,13 @@ import { JwtModule } from '@nestjs/jwt';
     
     // Puertos → Adaptadores (Inyección de Dependencias)
     {
-      provide: 'ServiceRouterPort',
-      useClass: HttpServiceRouterAdapter,
+      provide: AUTH_PROVIDER_PORT,
+      useClass: JwtAuthAdapter,
     },
     {
-      provide: 'AuthProviderPort',
-      useClass: JwtAuthAdapter,
+      provide: SERVICE_ROUTER_PORT,
+      useClass: HttpServiceRouterAdapter,
+    },
     },
     {
       provide: 'RateLimiterPort',
@@ -1229,6 +1230,17 @@ El use case necesita primero conocer qué partidos están activos. En una implem
 Para cada matchId activo, el use case consulta el puerto `OddsReaderPort` para obtener las cuotas actuales desde Redis. Si Redis retorna `null` (cache miss o TTL expirado), el partido se excluye del resultado con un log de warning.
 
 El use case formatea la respuesta incluyendo el identificador del partido, nombres de equipos, cuotas actuales y estado. El controlador retorna la respuesta con código HTTP doscientos y el array de partidos.
+
+### Nota de Implementación: Estado de Partido desde PostgreSQL
+
+La documentación conceptual menciona consultar al odds-engine por la lista de partidos activos. La implementación real tomó una decisión diferente por razones de desacoplamiento y simplicidad:
+
+En lugar de hacer una llamada HTTP síncrona al odds-engine, bet-service consulta directamente la tabla `odds_engine.matches` en PostgreSQL. Esta decisión:
+- Mantiene el desacoplamiento entre servicios (no hay dependencia de respuesta síncrona)
+- Usa datos que odds-engine ya persiste en PostgreSQL
+- Permite obtener el estado completo del partido (score, minuto) junto con las cuotas de Redis
+
+Esta aproximación es técnicamente equivalente en resultado, pero más robusta operacionalmente.
 
 ### Manejo de Cache Miss
 
