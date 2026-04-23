@@ -36,7 +36,6 @@ export class GatewayController {
       const statusCode = err.status ?? 500;
       const message = err?.message ?? 'Internal Server Error';
 
-      this.logger.error(`Proxy error caught: ${message}`);
       res.status(statusCode).json({ error: message });
     }
   }

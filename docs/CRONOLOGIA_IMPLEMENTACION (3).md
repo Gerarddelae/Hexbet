@@ -831,12 +831,13 @@ import { JwtModule } from '@nestjs/jwt';
     
     // Puertos → Adaptadores (Inyección de Dependencias)
     {
-      provide: 'ServiceRouterPort',
-      useClass: HttpServiceRouterAdapter,
+      provide: AUTH_PROVIDER_PORT,
+      useClass: JwtAuthAdapter,
     },
     {
-      provide: 'AuthProviderPort',
-      useClass: JwtAuthAdapter,
+      provide: SERVICE_ROUTER_PORT,
+      useClass: HttpServiceRouterAdapter,
+    },
     },
     {
       provide: 'RateLimiterPort',

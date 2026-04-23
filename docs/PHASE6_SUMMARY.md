@@ -29,6 +29,20 @@ Implementar el Bet Service como microservicio que gestiona el catálogo de parti
 
 **Decisión**: Bet-service consulta `odds_engine.matches` directamente en PostgreSQL en lugar de llamar a odds-engine por HTTP. Esto mantiene el desacoplamiento y evita dependencia de llamada síncrona.
 
+### Bugfix: Integración con API Gateway (2026-04-22)
+
+**Problema**: El proxy a través de API Gateway fallaba con `Cannot read properties of undefined`. Causas múltiples:
+- `ProxyRequestUseCase` no se injectaba correctamente en `GatewayController`
+- Tokens de string para DI no se resolvían
+- `@nestjs/axios` `HttpService` tiene problemas conocidos de inyección con `AXIOS_INSTANCE_TOKEN`
+
+**Solución**:
+- Crear constantes exportadas para tokens en `domain/ports/index.ts`
+- Usar `@Inject(Token)` en todos los constructores
+- Para `HttpServiceRouterAdapter`: usar `axios` directamente creado en el constructor
+
+**Decisión**: Usar `axios` directo en `HttpServiceRouterAdapter` en lugar de `HttpService` de NestJS. Esto funciona inmediatamente y evita los problemas documentados de inyección.
+
 ## Verificación y Uso
 
 Requisitos: infraestructura local levantada (PostgreSQL, Redis, Kafka),odds-enginerunning.
@@ -74,6 +88,18 @@ Checks operativos:
 
 ## Siguientes Pasos Recomendados
 
-1. Integrar Bet Service en API Gateway (proxificar `/matches/live`, `/bets`)
-2. Añadir publicación de `bet.placed` a Kafka para Settlement
+1. Integrar Bet Service en API Gateway (proxificar `/matches/live`, `/bets`) ✅ Corregido e integrado
+2. Publicar `bet.placed` a Kafka para Settlement
 3. Implementar settle-bet desde Settlement → Bet Service
+
+## Verificación End-to-End
+
+Con todos los servicios levantados:
+
+```bash
+# Consultar partidos vivos vía Gateway
+curl http://localhost:3000/bet-service/matches/live
+
+# Health vía Gateway
+curl http://localhost:3000/bet-service/health
+```

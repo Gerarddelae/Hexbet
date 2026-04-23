@@ -26,6 +26,7 @@ import { AUTH_PROVIDER_PORT, RATE_LIMITER_PORT, SERVICE_ROUTER_PORT } from './do
   providers: [
     ProxyRequestUseCase,
     OddsStreamGateway,
+    HttpServiceRouterAdapter,
     {
       provide: AUTH_PROVIDER_PORT,
       useClass: JwtAuthAdapter,

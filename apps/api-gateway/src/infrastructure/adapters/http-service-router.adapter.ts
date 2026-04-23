@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import axios, { AxiosRequestConfig } from 'axios';
+import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
 import { ServiceRouterPort, ForwardRequestConfig, ForwardResponse } from '../../domain/ports';
 import { serviceUrls } from '../config/services.config';
 
@@ -7,8 +7,13 @@ import { serviceUrls } from '../config/services.config';
 export class HttpServiceRouterAdapter implements ServiceRouterPort {
   private readonly logger = new Logger(HttpServiceRouterAdapter.name);
   private readonly timeout = 10000;
+  private readonly axiosInstance: AxiosInstance;
 
-  constructor() {}
+  constructor() {
+    this.axiosInstance = axios.create({
+      timeout: this.timeout,
+    });
+  }
 
   async forwardRequest(config: ForwardRequestConfig): Promise<ForwardResponse> {
     const { service, path, method, headers, body } = config;
@@ -32,14 +37,15 @@ export class HttpServiceRouterAdapter implements ServiceRouterPort {
 
     try {
       const axiosConfig: AxiosRequestConfig = {
+        url,
+        method: method.toLowerCase(),
+        data: body,
         headers: requestHeaders,
         timeout: this.timeout,
-        method: method.toLowerCase(),
-        url,
-        data: body,
+        validateStatus: () => true,
       };
 
-      const res = await axios(axiosConfig);
+      const res = await this.axiosInstance.request(axiosConfig);
 
       return {
         statusCode: res.status,
